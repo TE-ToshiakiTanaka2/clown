@@ -33,7 +33,8 @@
 - `start_level(n)` / `retry_level()` / `go_to_title()` / `go_to_stage_select()` / `clear_level()` — すべて `change_scene_to_file` を `call_deferred` 経由で呼ぶため、物理コールバック中でも安全に呼べる。
 - 死亡: `lives > 0` なら `retry_level()`、`lives == 0` なら `game_over` emit 後 2 秒(`SceneTreeTimer`)で `go_to_title()`(score/lives リセット)。
 - クリア: `level_cleared` emit → `unlocked_level` をレジストリ上限までクランプして更新・保存 → 数秒後に `go_to_stage_select()`(score/lives は維持)。
-- タイトルとステージ選択は `Control` ルートの通常シーン(`CanvasLayer` 不要)。HUD 同様、`Game` のシグナルに接続し、ノード解放時に自動切断される通常 `connect` のみを使う(autoload → 一時ノードへの参照保持は禁止)。
+- タイトルとステージ選択は `Control` ルートの通常シーン(`CanvasLayer` 不要)。`Game` へは API 呼び出し(`start_level` 等)で片方向にアクセスし、シーン側から `Game` のシグナルへ接続する場合はノード解放時に自動切断される通常 `connect` のみを使う(autoload → 一時ノードへの参照保持は禁止)。現状シグナル接続を行うのは HUD のみで、title/stage_select は入力時の API 呼び出しと表示時の状態読み取りだけを行う。
+- 死亡/クリアの多重通知対策: `Game` は `_level_ending` フラグで終端イベント(ゲームオーバー/クリア)を 1 レベルにつき 1 回だけ受理し、`_flow_epoch` で画面遷移後に残った遅延タイマーを無効化する。
 
 ## ツールチェーン
 

@@ -21,7 +21,7 @@ const STAGE_SELECT_SCENE: String = "res://scenes/stage_select.tscn"
 ## issue #6; level 2 is added in #8. `unlocked_level` is clamped against
 ## this registry, so stage 2 stays LOCKED in stage select until it is
 ## both unlocked *and* registered here.
-const LEVELS: Dictionary = {
+const LEVELS: Dictionary[int, String] = {
 	1: "res://scenes/level_1.tscn",
 }
 
@@ -29,6 +29,13 @@ var score: int = 0
 var lives: int = STARTING_LIVES
 var current_level: int = 0
 var unlocked_level: int = 1
+
+# True while a terminal level outcome (game over / clear) is being staged;
+# makes death and clear mutually exclusive and accepted only once per level.
+var _level_ending: bool = false
+# Bumped on every flow transition so stale delayed-transition timers
+# (e.g. a clear timer surviving into the title screen) become no-ops.
+var _flow_epoch: int = 0
 
 
 func _ready() -> void:
@@ -45,20 +52,26 @@ func add_score(points: int) -> void:
 
 
 func player_died() -> void:
+	if _level_ending:
+		return
 	lives -= 1
 	lives_changed.emit(lives)
 	if lives > 0:
 		retry_level()
 	else:
+		_level_ending = true
 		game_over.emit()
-		get_tree().create_timer(GAME_OVER_DELAY_SEC).timeout.connect(go_to_title)
+		_delayed_transition(GAME_OVER_DELAY_SEC, go_to_title)
 
 
 func clear_level() -> void:
+	if _level_ending:
+		return
+	_level_ending = true
 	level_cleared.emit()
 	unlocked_level = clampi(maxi(unlocked_level, current_level + 1), 1, max_level())
 	_save_progress()
-	get_tree().create_timer(LEVEL_CLEAR_DELAY_SEC).timeout.connect(go_to_stage_select)
+	_delayed_transition(LEVEL_CLEAR_DELAY_SEC, go_to_stage_select)
 
 
 func start_level(n: int) -> void:
@@ -71,6 +84,7 @@ func start_level(n: int) -> void:
 	current_level = n
 	# Deferred: may be called from UI input during physics callbacks elsewhere,
 	# and change_scene_to_file must never run mid-physics-step.
+	_begin_transition()
 	get_tree().change_scene_to_file.call_deferred(LEVELS[n])
 
 
@@ -80,18 +94,35 @@ func retry_level() -> void:
 	if current_level == 0 or not LEVELS.has(current_level):
 		go_to_title()
 		return
+	_begin_transition()
 	get_tree().change_scene_to_file.call_deferred(LEVELS[current_level])
 
 
 func go_to_title() -> void:
 	reset_run()
 	current_level = 0
+	_begin_transition()
 	get_tree().change_scene_to_file.call_deferred(TITLE_SCENE)
 
 
 func go_to_stage_select() -> void:
 	current_level = 0
+	_begin_transition()
 	get_tree().change_scene_to_file.call_deferred(STAGE_SELECT_SCENE)
+
+
+func _begin_transition() -> void:
+	## Invalidate any pending delayed transition and re-arm outcome handling
+	## for the scene being entered.
+	_flow_epoch += 1
+	_level_ending = false
+
+
+func _delayed_transition(delay_sec: float, action: Callable) -> void:
+	var epoch := _flow_epoch
+	get_tree().create_timer(delay_sec).timeout.connect(func() -> void:
+		if epoch == _flow_epoch:
+			action.call())
 
 
 func reset_run() -> void:
@@ -104,7 +135,9 @@ func reset_run() -> void:
 func _save_progress() -> void:
 	var config := ConfigFile.new()
 	config.set_value("progress", "unlocked_level", unlocked_level)
-	config.save(SAVE_PATH)
+	var err := config.save(SAVE_PATH)
+	if err != OK:
+		push_error("Game: failed to save progress to %s (error %d)" % [SAVE_PATH, err])
 
 
 func _load_progress() -> void:
