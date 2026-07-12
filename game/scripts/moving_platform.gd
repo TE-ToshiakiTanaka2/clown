@@ -20,11 +20,21 @@ func _ready() -> void:
 	_origin = position
 	_elapsed = phase * maxf(cycle_sec, 0.2)
 	SolidPlatform._apply_geometry(collision_shape, visual, platform_size, platform_color)
+	var should_sync := sync_to_physics
+	sync_to_physics = false
+	_update_position()
+	sync_to_physics = should_sync
+	reset_physics_interpolation()
 
 
 func _physics_process(delta: float) -> void:
 	var safe_cycle := maxf(cycle_sec, 0.2)
 	_elapsed = fmod(_elapsed + delta, safe_cycle)
+	_update_position()
+
+
+func _update_position() -> void:
+	var safe_cycle := maxf(cycle_sec, 0.2)
 	var progress := _elapsed / safe_cycle
 	var eased_progress := 0.5 - 0.5 * cos(TAU * progress)
 	position = _origin + travel * eased_progress

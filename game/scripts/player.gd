@@ -129,6 +129,8 @@ func _update_animation() -> void:
 
 func _do_jump() -> void:
 	velocity.y = jump_velocity
+	_contact_vertical_velocity = velocity.y
+	_last_descending_physics_frame = -1000
 	coyote_timer.stop()
 	jump_buffer_timer.stop()
 

@@ -16,6 +16,7 @@ func _run() -> void:
 	_test_save_compatibility()
 	await _test_player_damage_rules()
 	_test_enemy_scene_contract()
+	await _test_turtle_state_rules()
 	await _test_physics_contact_resolution()
 	await _test_gimmick_behavior()
 	await _test_level_scene_contracts()
@@ -93,6 +94,13 @@ func _test_player_damage_rules() -> void:
 		player.classify_enemy_contact(player.feet_global_y() + 1.0),
 		Player.ContactOutcome.DAMAGE,
 		"non-descending contact is damage"
+	)
+	player._last_descending_physics_frame = Engine.get_physics_frames()
+	player._do_jump()
+	_assert_equal(
+		player.classify_enemy_contact(player.feet_global_y() + 1.0),
+		Player.ContactOutcome.DAMAGE,
+		"upward jump clears recent falling history"
 	)
 
 	Game._level_ending = true
@@ -179,6 +187,45 @@ func _test_enemy_scene_contract() -> void:
 		_assert_false(enemy.has_node("StompArea"), "%s has no competing StompArea" % scene_path)
 		_assert_false(enemy.has_node("HitArea"), "%s has no competing HitArea" % scene_path)
 		enemy.free()
+
+
+func _test_turtle_state_rules() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var turtle_scene := load("res://scenes/turtle.tscn") as PackedScene
+	if player_scene == null or turtle_scene == null:
+		_failures.append("Turtle state fixtures load")
+		return
+
+	Game._level_ending = true
+	var fixture := Node2D.new()
+	var turtle := turtle_scene.instantiate() as Turtle
+	var side_player := player_scene.instantiate() as Player
+	turtle.position = Vector2.ZERO
+	side_player.position = Vector2(-20.0, 0.0)
+	side_player.power_state = Player.PowerState.SUPER
+	fixture.add_child(turtle)
+	fixture.add_child(side_player)
+	get_tree().root.add_child(fixture)
+	turtle.set_physics_process(false)
+	side_player.set_physics_process(false)
+	turtle._enter_shell()
+	turtle._on_contact_area_body_entered(side_player)
+	_assert_equal(turtle.state, Turtle.State.SLIDING, "stationary shell side contact starts sliding")
+	_assert_equal(turtle.direction, 1, "shell moves away from player")
+	turtle._on_contact_area_body_entered(side_player)
+	_assert_equal(side_player.power_state, Player.PowerState.SMALL, "sliding shell side contact damages SUPER")
+
+	var top_player := player_scene.instantiate() as Player
+	top_player.position = Vector2(0.0, -25.0)
+	top_player.velocity.y = 100.0
+	fixture.add_child(top_player)
+	top_player.set_physics_process(false)
+	turtle._on_contact_area_body_entered(top_player)
+	_assert_equal(turtle.state, Turtle.State.SHELL, "sliding shell top contact stops shell")
+	_assert_true(top_player.velocity.y < 0.0, "sliding shell stomp bounces player")
+	fixture.queue_free()
+	await get_tree().process_frame
+	Game._level_ending = false
 
 
 func _test_physics_contact_resolution() -> void:
@@ -269,6 +316,21 @@ func _test_gimmick_behavior() -> void:
 		await get_tree().physics_frame
 	_assert_true(moving.position.x > moving_origin.x, "moving platform advances along travel vector")
 	moving.queue_free()
+	await get_tree().process_frame
+
+	var phased_moving := moving_scene.instantiate() as MovingPlatform
+	phased_moving.travel = Vector2(100.0, 0.0)
+	phased_moving.cycle_sec = 2.0
+	phased_moving.phase = 0.5
+	get_tree().root.add_child(phased_moving)
+	_assert_equal(phased_moving.position, Vector2(100.0, 0.0), "moving platform applies phase in ready")
+	var phased_start := phased_moving.position
+	await get_tree().physics_frame
+	_assert_true(
+		phased_moving.position.distance_to(phased_start) < 1.0,
+		"phased moving platform does not teleport on first tick"
+	)
+	phased_moving.queue_free()
 	await get_tree().process_frame
 
 	var spring_fixture := Node2D.new()
