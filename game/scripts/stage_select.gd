@@ -3,10 +3,17 @@ extends Control
 ## Locked stages show "LOCKED" and cannot be entered (ui_cancel returns
 ## to the title screen instead).
 
-@onready var panels: Array[PanelContainer] = [$Panels/Stage1, $Panels/Stage2]
+@onready var panels: Array[PanelContainer] = [
+	$Panels/Stage1,
+	$Panels/Stage2,
+	$Panels/Stage3,
+	$Panels/Stage4,
+]
 @onready var lock_labels: Array[Label] = [
 	$Panels/Stage1/VBox/LockLabel,
 	$Panels/Stage2/VBox/LockLabel,
+	$Panels/Stage3/VBox/LockLabel,
+	$Panels/Stage4/VBox/LockLabel,
 ]
 @onready var score_label: Label = $Bottom/ScoreLabel
 @onready var lives_label: Label = $Bottom/LivesLabel

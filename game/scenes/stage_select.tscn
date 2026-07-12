@@ -53,17 +53,17 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -180.0
-offset_top = -70.0
-offset_right = 180.0
-offset_bottom = 70.0
+offset_left = -304.0
+offset_top = -92.0
+offset_right = 304.0
+offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 40
+theme_override_constants/separation = 16
 alignment = 1
 
 [node name="Stage1" type="PanelContainer" parent="Panels"]
-custom_minimum_size = Vector2(140, 140)
+custom_minimum_size = Vector2(136, 132)
 layout_mode = 2
 pivot_offset = Vector2(70, 70)
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -85,8 +85,14 @@ text = "LOCKED"
 horizontal_alignment = 1
 visible = false
 
+[node name="ThemeLabel" type="Label" parent="Panels/Stage1/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
+text = "GROUND"
+horizontal_alignment = 1
+
 [node name="Stage2" type="PanelContainer" parent="Panels"]
-custom_minimum_size = Vector2(140, 140)
+custom_minimum_size = Vector2(136, 132)
 layout_mode = 2
 pivot_offset = Vector2(70, 70)
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
@@ -107,6 +113,88 @@ theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
 text = "LOCKED"
 horizontal_alignment = 1
 visible = true
+
+[node name="ThemeLabel" type="Label" parent="Panels/Stage2/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
+text = "CAVE"
+horizontal_alignment = 1
+
+[node name="Stage3" type="PanelContainer" parent="Panels"]
+custom_minimum_size = Vector2(136, 132)
+layout_mode = 2
+pivot_offset = Vector2(68, 66)
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Panels/Stage3"]
+layout_mode = 2
+alignment = 1
+
+[node name="StageLabel" type="Label" parent="Panels/Stage3/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "3"
+horizontal_alignment = 1
+
+[node name="LockLabel" type="Label" parent="Panels/Stage3/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
+text = "LOCKED"
+horizontal_alignment = 1
+visible = true
+
+[node name="ThemeLabel" type="Label" parent="Panels/Stage3/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
+text = "SKY"
+horizontal_alignment = 1
+
+[node name="Stage4" type="PanelContainer" parent="Panels"]
+custom_minimum_size = Vector2(136, 132)
+layout_mode = 2
+pivot_offset = Vector2(68, 66)
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Panels/Stage4"]
+layout_mode = 2
+alignment = 1
+
+[node name="StageLabel" type="Label" parent="Panels/Stage4/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "4"
+horizontal_alignment = 1
+
+[node name="LockLabel" type="Label" parent="Panels/Stage4/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.3, 0.3, 1)
+text = "LOCKED"
+horizontal_alignment = 1
+visible = true
+
+[node name="ThemeLabel" type="Label" parent="Panels/Stage4/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
+text = "CASTLE"
+horizontal_alignment = 1
+
+[node name="Rules" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -112.0
+offset_right = -24.0
+offset_bottom = -48.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.92, 0.92, 0.75, 1)
+theme_override_font_sizes/font_size = 12
+text = "RULES  STOMP from above • SIDE HIT: SMALL loses 1 life\nSUPER shrinks + 1.5s guard • 0 LIVES = GAME OVER\nSPIKES damage • LAVA / FALL = instant miss\n← → SELECT   SPACE / ENTER START   ESC TITLE"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Bottom" type="HBoxContainer" parent="."]
 layout_mode = 1

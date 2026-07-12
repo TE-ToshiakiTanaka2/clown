@@ -23,6 +23,8 @@ const STAGE_SELECT_SCENE: String = "res://scenes/stage_select.tscn"
 const LEVELS: Dictionary[int, String] = {
 	1: "res://scenes/level_1.tscn",
 	2: "res://scenes/level_2.tscn",
+	3: "res://scenes/level_3.tscn",
+	4: "res://scenes/level_4.tscn",
 }
 
 var score: int = 0

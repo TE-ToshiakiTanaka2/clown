@@ -1,0 +1,287 @@
+[gd_scene load_steps=15 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/goomba.tscn" id="2_goomba"]
+[ext_resource type="PackedScene" path="res://scenes/turtle.tscn" id="3_turtle"]
+[ext_resource type="PackedScene" path="res://scenes/coin.tscn" id="4_coin"]
+[ext_resource type="PackedScene" path="res://scenes/flag.tscn" id="5_flag"]
+[ext_resource type="Script" path="res://scripts/kill_zone.gd" id="6_kill"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="7_hud"]
+[ext_resource type="PackedScene" path="res://scenes/question_block.tscn" id="8_block"]
+[ext_resource type="PackedScene" path="res://scenes/solid_platform.tscn" id="9_solid"]
+[ext_resource type="PackedScene" path="res://scenes/moving_platform.tscn" id="10_moving"]
+[ext_resource type="PackedScene" path="res://scenes/falling_platform.tscn" id="11_falling"]
+[ext_resource type="PackedScene" path="res://scenes/spring.tscn" id="12_spring"]
+[ext_resource type="PackedScene" path="res://scenes/damage_hazard.tscn" id="13_hazard"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kill"]
+size = Vector2(3840, 80)
+
+[node name="Level4" type="Node2D"]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 3760.0
+offset_bottom = 360.0
+mouse_filter = 2
+color = Color(0.095, 0.075, 0.13, 1)
+
+[node name="StageTitle" type="Label" parent="."]
+offset_left = 48.0
+offset_top = 36.0
+offset_right = 360.0
+offset_bottom = 72.0
+theme_override_colors/font_color = Color(1, 0.65, 0.35, 0.75)
+theme_override_font_sizes/font_size = 24
+text = "4  LAVA KEEP"
+
+[node name="Terrain" type="Node2D" parent="."]
+
+[node name="StartGround" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(300, 312)
+platform_size = Vector2(600, 48)
+platform_color = Color(0.32, 0.29, 0.38, 1)
+
+[node name="Island1" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(1080, 312)
+platform_size = Vector2(360, 48)
+platform_color = Color(0.38, 0.34, 0.44, 1)
+
+[node name="Ceiling1" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(1080, 96)
+platform_size = Vector2(440, 32)
+platform_color = Color(0.24, 0.21, 0.3, 1)
+
+[node name="Island2" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(1810, 312)
+platform_size = Vector2(300, 48)
+platform_color = Color(0.38, 0.34, 0.44, 1)
+
+[node name="HighLedge" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(2040, 194)
+platform_size = Vector2(224, 24)
+platform_color = Color(0.45, 0.38, 0.48, 1)
+
+[node name="Island3" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(2260, 312)
+platform_size = Vector2(240, 48)
+platform_color = Color(0.38, 0.34, 0.44, 1)
+
+[node name="GoalGround" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(3330, 312)
+platform_size = Vector2(860, 48)
+platform_color = Color(0.32, 0.29, 0.38, 1)
+
+[node name="FinalStep1" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(3370, 254)
+platform_size = Vector2(96, 20)
+platform_color = Color(0.48, 0.42, 0.52, 1)
+
+[node name="FinalStep2" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(3470, 218)
+platform_size = Vector2(96, 20)
+platform_color = Color(0.48, 0.42, 0.52, 1)
+
+[node name="FinalStep3" parent="Terrain" instance=ExtResource("9_solid")]
+position = Vector2(3570, 182)
+platform_size = Vector2(96, 20)
+platform_color = Color(0.48, 0.42, 0.52, 1)
+
+[node name="Gimmicks" type="Node2D" parent="."]
+
+[node name="SpikeStrip1" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(420, 280)
+hazard_size = Vector2(72, 16)
+
+[node name="LavaPit1" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(750, 336)
+hazard_size = Vector2(300, 48)
+hazard_color = Color(1, 0.24, 0.05, 1)
+instant_kill = true
+
+[node name="LavaLift1" parent="Gimmicks" instance=ExtResource("10_moving")]
+position = Vector2(630, 250)
+platform_size = Vector2(88, 16)
+platform_color = Color(0.85, 0.52, 0.16, 1)
+travel = Vector2(130, -30)
+cycle_sec = 2.8
+
+[node name="LavaLift2" parent="Gimmicks" instance=ExtResource("10_moving")]
+position = Vector2(780, 210)
+platform_size = Vector2(88, 16)
+platform_color = Color(0.85, 0.52, 0.16, 1)
+travel = Vector2(110, 35)
+cycle_sec = 3.1
+phase = 0.5
+
+[node name="SpikeStrip2" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(1160, 280)
+hazard_size = Vector2(80, 16)
+
+[node name="LavaPit2" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(1490, 336)
+hazard_size = Vector2(460, 48)
+hazard_color = Color(1, 0.24, 0.05, 1)
+instant_kill = true
+
+[node name="FallingStone1" parent="Gimmicks" instance=ExtResource("11_falling")]
+position = Vector2(1320, 248)
+platform_size = Vector2(82, 18)
+platform_color = Color(0.5, 0.43, 0.52, 1)
+trigger_delay_sec = 0.5
+
+[node name="FallingStone2" parent="Gimmicks" instance=ExtResource("11_falling")]
+position = Vector2(1440, 212)
+platform_size = Vector2(82, 18)
+platform_color = Color(0.5, 0.43, 0.52, 1)
+trigger_delay_sec = 0.4
+
+[node name="FallingStone3" parent="Gimmicks" instance=ExtResource("11_falling")]
+position = Vector2(1560, 248)
+platform_size = Vector2(82, 18)
+platform_color = Color(0.5, 0.43, 0.52, 1)
+trigger_delay_sec = 0.3
+
+[node name="Spring1" parent="Gimmicks" instance=ExtResource("12_spring")]
+position = Vector2(1830, 282)
+spring_color = Color(0.95, 0.8, 0.2, 1)
+launch_velocity = -570.0
+
+[node name="SpikeStrip3" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(2240, 280)
+hazard_size = Vector2(64, 16)
+
+[node name="LavaPit3" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(2695, 336)
+hazard_size = Vector2(630, 48)
+hazard_color = Color(1, 0.24, 0.05, 1)
+instant_kill = true
+
+[node name="LavaBridge1" parent="Gimmicks" instance=ExtResource("10_moving")]
+position = Vector2(2400, 250)
+platform_size = Vector2(104, 16)
+platform_color = Color(0.85, 0.52, 0.16, 1)
+travel = Vector2(170, 0)
+cycle_sec = 3.0
+
+[node name="LavaBridge2" parent="Gimmicks" instance=ExtResource("10_moving")]
+position = Vector2(2630, 205)
+platform_size = Vector2(104, 16)
+platform_color = Color(0.85, 0.52, 0.16, 1)
+travel = Vector2(170, 0)
+cycle_sec = 3.4
+phase = 0.5
+
+[node name="LavaBridge3" parent="Gimmicks" instance=ExtResource("10_moving")]
+position = Vector2(2860, 250)
+platform_size = Vector2(104, 16)
+platform_color = Color(0.85, 0.52, 0.16, 1)
+travel = Vector2(130, -55)
+cycle_sec = 2.7
+
+[node name="SpikeStrip4" parent="Gimmicks" instance=ExtResource("13_hazard")]
+position = Vector2(3190, 280)
+hazard_size = Vector2(80, 16)
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector2(56, 250)
+
+[node name="Camera2D" type="Camera2D" parent="Player"]
+limit_left = 0
+limit_top = 0
+limit_right = 3760
+limit_bottom = 360
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="Goomba1" parent="Enemies" instance=ExtResource("2_goomba")]
+position = Vector2(280, 276)
+
+[node name="Turtle1" parent="Enemies" instance=ExtResource("3_turtle")]
+position = Vector2(1020, 276)
+
+[node name="Goomba2" parent="Enemies" instance=ExtResource("2_goomba")]
+position = Vector2(1240, 276)
+
+[node name="Goomba3" parent="Enemies" instance=ExtResource("2_goomba")]
+position = Vector2(1760, 276)
+
+[node name="Turtle2" parent="Enemies" instance=ExtResource("3_turtle")]
+position = Vector2(2040, 170)
+
+[node name="Turtle3" parent="Enemies" instance=ExtResource("3_turtle")]
+position = Vector2(2260, 276)
+
+[node name="Goomba4" parent="Enemies" instance=ExtResource("2_goomba")]
+position = Vector2(3110, 276)
+
+[node name="Goomba5" parent="Enemies" instance=ExtResource("2_goomba")]
+position = Vector2(3310, 276)
+
+[node name="Coins" type="Node2D" parent="."]
+
+[node name="Coin1" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(160, 250)
+[node name="Coin2" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(500, 230)
+[node name="Coin3" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(630, 195)
+[node name="Coin4" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(780, 160)
+[node name="Coin5" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(940, 250)
+[node name="Coin6" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(1080, 220)
+[node name="Coin7" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(1320, 205)
+[node name="Coin8" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(1440, 170)
+[node name="Coin9" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(1560, 205)
+[node name="Coin10" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(1780, 240)
+[node name="Coin11" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(1980, 145)
+[node name="Coin12" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(2060, 145)
+[node name="Coin13" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(2260, 220)
+[node name="Coin14" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(2410, 200)
+[node name="Coin15" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(2570, 165)
+[node name="Coin16" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(2730, 165)
+[node name="Coin17" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(2890, 200)
+[node name="Coin18" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(3090, 230)
+[node name="Coin19" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(3430, 170)
+[node name="Coin20" parent="Coins" instance=ExtResource("4_coin")]
+position = Vector2(3530, 135)
+
+[node name="Blocks" type="Node2D" parent="."]
+
+[node name="QuestionBlockMushroom" parent="Blocks" instance=ExtResource("8_block")]
+position = Vector2(1080, 220)
+content = 1
+
+[node name="QuestionBlockOneUp" parent="Blocks" instance=ExtResource("8_block")]
+position = Vector2(2040, 128)
+content = 2
+
+[node name="Flag" parent="." instance=ExtResource("5_flag")]
+position = Vector2(3660, 172)
+
+[node name="KillZone" type="Area2D" parent="."]
+position = Vector2(1880, 410)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("6_kill")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
+shape = SubResource("RectangleShape2D_kill")
+
+[node name="HUD" parent="." instance=ExtResource("7_hud")]
