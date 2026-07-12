@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://scripts/kill_zone.gd" id="9_2cbcq"]
 [ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="10_isj1j"]
 [ext_resource type="Texture2D" path="res://assets/sprites/tiles.png" id="11_tiles"]
+[ext_resource type="PackedScene" path="res://scenes/turtle.tscn" id="12_turtle"]
+[ext_resource type="PackedScene" path="res://scenes/question_block.tscn" id="13_qblock"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d5akn"]
 texture = ExtResource("11_tiles")
@@ -107,6 +109,9 @@ position = Vector2(1448, 149)
 [node name="Goomba3" parent="Enemies" unique_id=126106528 instance=ExtResource("3_7gny6")]
 position = Vector2(2328, 149)
 
+[node name="Turtle1" parent="Enemies" instance=ExtResource("12_turtle")]
+position = Vector2(850, 149)
+
 [node name="Coins" type="Node2D" parent="." unique_id=337635377]
 
 [node name="Coin1" parent="Coins" unique_id=611006388 instance=ExtResource("5_6dial")]
@@ -132,6 +137,15 @@ position = Vector2(2664, 72)
 
 [node name="Coin8" parent="Coins" unique_id=1776299791 instance=ExtResource("5_6dial")]
 position = Vector2(3048, 136)
+
+[node name="Blocks" type="Node2D" parent="."]
+
+[node name="QuestionBlockMushroom" parent="Blocks" instance=ExtResource("13_qblock")]
+position = Vector2(220, 112)
+content = 1
+
+[node name="QuestionBlockCoin" parent="Blocks" instance=ExtResource("13_qblock")]
+position = Vector2(900, 112)
 
 [node name="Flag" parent="." unique_id=1809903053 instance=ExtResource("7_1s4pk")]
 position = Vector2(3144, 160)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player_idle.png" id="2_idle"]
@@ -7,6 +7,11 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/player_run_2.png" id="5_run2"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player_jump.png" id="6_jump"]
 [ext_resource type="Texture2D" path="res://assets/sprites/player_death.png" id="7_death"]
+[ext_resource type="Texture2D" path="res://assets/sprites/super_idle.png" id="8_super_idle"]
+[ext_resource type="Texture2D" path="res://assets/sprites/super_run_0.png" id="9_super_run0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/super_run_1.png" id="10_super_run1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/super_run_2.png" id="11_super_run2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/super_jump.png" id="12_super_jump"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(20, 30)
@@ -53,6 +58,39 @@ animations = [{
 "loop": true,
 "name": &"death",
 "speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("8_super_idle")
+}],
+"loop": true,
+"name": &"super_idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_super_run0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_super_run1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_super_run2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_super_run1")
+}],
+"loop": true,
+"name": &"super_run",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("12_super_jump")
+}],
+"loop": true,
+"name": &"super_jump",
+"speed": 5.0
 }]
 
 [node name="Player" type="CharacterBody2D"]
@@ -75,4 +113,8 @@ one_shot = true
 
 [node name="JumpBufferTimer" type="Timer" parent="."]
 wait_time = 0.1
+one_shot = true
+
+[node name="InvincibilityTimer" type="Timer" parent="."]
+wait_time = 1.5
 one_shot = true
