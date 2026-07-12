@@ -20,3 +20,12 @@ sandbox_mode = "workspace-write"
 [mcp_servers.context7]
 command = "npx"
 args = ["-y", "@upstash/context7-mcp"]
+
+# Godot MCP server (godot-mcp): lets Codex drive the headless Godot 4 editor
+# installed at /usr/local/bin/godot for the game/ project skeleton. See #1.
+[mcp_servers.godot]
+command = "node"
+args = ["/home/vscode/tools/godot-mcp/build/index.js"]
+
+[mcp_servers.godot.env]
+GODOT_PATH = "/usr/local/bin/godot"
