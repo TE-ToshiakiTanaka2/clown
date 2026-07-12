@@ -625,11 +625,13 @@ def tile_pipe(quadrant: str) -> Grid:
 
 
 def tile_cloud(half: str) -> Grid:
+    # Both halves sample one 32x16 ellipse centered on the shared seam so the
+    # two tiles form a single contiguous cloud when placed side by side.
     grid: Grid = [[TRANSPARENT] * TILE_SIZE for _ in range(TILE_SIZE)]
-    cx = 2 if half == "left" else TILE_SIZE - 3
+    x_offset = 0 if half == "left" else TILE_SIZE
     for y in range(4, 13):
         for x in range(TILE_SIZE):
-            dx = (x - cx) / 7.0
+            dx = (x + x_offset - 15.5) / 14.0
             dy = (y - 8) / 5.0
             if dx * dx + dy * dy <= 1.0:
                 grid[y][x] = SKY_CLOUD_SHADE if dy > 0.4 else SKY_CLOUD

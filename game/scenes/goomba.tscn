@@ -42,8 +42,10 @@ collision_mask = 3
 script = ExtResource("1_goomba")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+scale = Vector2(1.375, 1.375)
 sprite_frames = SubResource("SpriteFrames_goomba")
 animation = &"walk"
+autoplay = "walk"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_body")
