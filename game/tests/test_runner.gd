@@ -16,6 +16,7 @@ func _run() -> void:
 	await _test_player_damage_rules()
 	_test_enemy_scene_contract()
 	await _test_physics_contact_resolution()
+	await _test_gimmick_behavior()
 	await _test_level_scene_contracts()
 
 	if _failures.is_empty():
@@ -182,6 +183,97 @@ func _test_physics_contact_resolution() -> void:
 	_assert_equal(turtle.state, Turtle.State.SHELL, "physical top contact shells Turtle")
 	_assert_true(turtle_player.velocity.y < 0.0, "Turtle stomp bounces player")
 	turtle_fixture.queue_free()
+	await get_tree().process_frame
+	Game._level_ending = false
+
+
+func _test_gimmick_behavior() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var moving_scene := load("res://scenes/moving_platform.tscn") as PackedScene
+	var falling_scene := load("res://scenes/falling_platform.tscn") as PackedScene
+	var spring_scene := load("res://scenes/spring.tscn") as PackedScene
+	var hazard_scene := load("res://scenes/damage_hazard.tscn") as PackedScene
+	if null in [player_scene, moving_scene, falling_scene, spring_scene, hazard_scene]:
+		_failures.append("gimmick fixtures load")
+		return
+
+	var moving := moving_scene.instantiate() as MovingPlatform
+	moving.travel = Vector2(100.0, 0.0)
+	moving.cycle_sec = 1.0
+	get_tree().root.add_child(moving)
+	var moving_origin := moving.position
+	for _frame in 8:
+		await get_tree().physics_frame
+	_assert_true(moving.position.x > moving_origin.x, "moving platform advances along travel vector")
+	moving.queue_free()
+	await get_tree().process_frame
+
+	var spring_fixture := Node2D.new()
+	var spring := spring_scene.instantiate() as Spring
+	var spring_player := player_scene.instantiate() as Player
+	spring.launch_velocity = -600.0
+	spring_player.position = Vector2.ZERO
+	spring_fixture.add_child(spring)
+	spring_fixture.add_child(spring_player)
+	get_tree().root.add_child(spring_fixture)
+	spring_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_equal(spring_player.velocity.y, -600.0, "spring applies configured launch velocity")
+	spring_fixture.queue_free()
+	await get_tree().process_frame
+
+	var falling := falling_scene.instantiate() as FallingPlatform
+	var trigger_player := player_scene.instantiate() as Player
+	falling.trigger_delay_sec = 0.05
+	falling.reset_delay_sec = 1.0
+	get_tree().root.add_child(falling)
+	get_tree().root.add_child(trigger_player)
+	falling._on_trigger_area_body_entered(trigger_player)
+	_assert_equal(falling.state, FallingPlatform.State.WARNING, "falling platform enters warning state")
+	await get_tree().create_timer(0.08).timeout
+	_assert_equal(falling.state, FallingPlatform.State.FALLING, "falling platform starts after delay")
+	var fall_y := falling.position.y
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_true(falling.position.y > fall_y, "falling platform moves downward")
+	falling._on_reset_timer_timeout()
+	await get_tree().physics_frame
+	_assert_equal(falling.position, Vector2.ZERO, "falling platform returns to origin")
+	_assert_equal(falling.state, FallingPlatform.State.READY, "falling platform re-arms")
+	falling.queue_free()
+	trigger_player.queue_free()
+	await get_tree().process_frame
+
+	Game._level_ending = true
+	var spike_fixture := Node2D.new()
+	var spike := hazard_scene.instantiate() as DamageHazard
+	var spike_player := player_scene.instantiate() as Player
+	spike_player.power_state = Player.PowerState.SUPER
+	spike_fixture.add_child(spike)
+	spike_fixture.add_child(spike_player)
+	get_tree().root.add_child(spike_fixture)
+	spike_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_equal(spike_player.power_state, Player.PowerState.SMALL, "spikes apply normal power-state damage")
+	_assert_false(spike_player.is_dead(), "SUPER survives spike damage")
+	spike_fixture.queue_free()
+	await get_tree().process_frame
+
+	var lava_fixture := Node2D.new()
+	var lava := hazard_scene.instantiate() as DamageHazard
+	var lava_player := player_scene.instantiate() as Player
+	lava.instant_kill = true
+	lava_player.power_state = Player.PowerState.SUPER
+	lava_fixture.add_child(lava)
+	lava_fixture.add_child(lava_player)
+	get_tree().root.add_child(lava_fixture)
+	lava_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_true(lava_player.is_dead(), "lava is an instant miss even while SUPER")
+	lava_fixture.queue_free()
 	await get_tree().process_frame
 	Game._level_ending = false
 
