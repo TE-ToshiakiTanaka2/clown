@@ -23,6 +23,8 @@ const STAGE_SELECT_SCENE: String = "res://scenes/stage_select.tscn"
 const LEVELS: Dictionary[int, String] = {
 	1: "res://scenes/level_1.tscn",
 	2: "res://scenes/level_2.tscn",
+	3: "res://scenes/level_3.tscn",
+	4: "res://scenes/level_4.tscn",
 }
 
 var score: int = 0
@@ -85,9 +87,15 @@ func clear_level() -> void:
 		return
 	_level_ending = true
 	level_cleared.emit()
-	unlocked_level = clampi(maxi(unlocked_level, current_level + 1), 1, max_level())
+	unlocked_level = _unlocked_after_clear(current_level, unlocked_level)
 	_save_progress()
 	_delayed_transition(LEVEL_CLEAR_DELAY_SEC, go_to_stage_select)
+
+
+func _unlocked_after_clear(level_number: int, highest_unlocked: int) -> int:
+	## Pure progression rule kept separate from persistence/scene transitions so
+	## save compatibility and final-stage clamping can be regression-tested.
+	return clampi(maxi(highest_unlocked, level_number + 1), 1, max_level())
 
 
 func start_level(n: int) -> void:
@@ -156,8 +164,8 @@ func _save_progress() -> void:
 		push_error("Game: failed to save progress to %s (error %d)" % [SAVE_PATH, err])
 
 
-func _load_progress() -> void:
+func _load_progress(path: String = SAVE_PATH) -> void:
 	var config := ConfigFile.new()
-	if config.load(SAVE_PATH) == OK:
+	if config.load(path) == OK:
 		var saved: int = int(config.get_value("progress", "unlocked_level", 1))
 		unlocked_level = clampi(saved, 1, max_level())

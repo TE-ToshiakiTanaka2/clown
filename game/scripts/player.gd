@@ -11,9 +11,11 @@ signal died
 ## Only the sprite changes between the two -- the collision shape stays the
 ## same size in both states (see docs/design/#7/design.md).
 enum PowerState { SMALL, SUPER }
+enum ContactOutcome { IGNORE, STOMP, DAMAGE }
 
 const INVINCIBILITY_SEC: float = 1.5
 const INVINCIBILITY_BLINK_SEC: float = 0.1
+const STOMP_GRACE_PHYSICS_FRAMES: int = 6
 
 @export var speed: float = 150.0
 @export var acceleration: float = 1000.0
@@ -32,6 +34,11 @@ var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var _is_dead: bool = false
 var _half_height: float = 0.0
 var _invincible: bool = false
+# `move_and_slide()` can zero velocity.y before an Area2D body_entered signal is
+# delivered. Preserve the velocity used for the move so a real falling stomp is
+# not misclassified as stationary side damage.
+var _contact_vertical_velocity: float = 0.0
+var _last_descending_physics_frame: int = -1000
 
 
 func _ready() -> void:
@@ -46,6 +53,30 @@ func _ready() -> void:
 func feet_global_y() -> float:
 	## Global y of the player's bottom edge; used by enemies for stomp checks.
 	return global_position.y + _half_height
+
+
+func classify_enemy_contact(enemy_center_y: float) -> ContactOutcome:
+	## A single classification point keeps overlapping physics callbacks from
+	## producing contradictory stomp and damage outcomes. Dead and temporarily
+	## invincible players never affect or take damage from an enemy contact.
+	if _is_dead or _invincible:
+		return ContactOutcome.IGNORE
+	var frames_since_descent := Engine.get_physics_frames() - _last_descending_physics_frame
+	var was_descending := (
+		maxf(velocity.y, _contact_vertical_velocity) > 0.0
+		or frames_since_descent <= STOMP_GRACE_PHYSICS_FRAMES
+	)
+	if was_descending and feet_global_y() <= enemy_center_y:
+		return ContactOutcome.STOMP
+	return ContactOutcome.DAMAGE
+
+
+func is_dead() -> bool:
+	return _is_dead
+
+
+func is_invincible() -> bool:
+	return _invincible
 
 
 func _on_level_cleared() -> void:
@@ -77,6 +108,9 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= jump_cut_factor
 
+	_contact_vertical_velocity = velocity.y
+	if velocity.y > 0.0:
+		_last_descending_physics_frame = Engine.get_physics_frames()
 	move_and_slide()
 	_update_animation()
 
@@ -95,12 +129,29 @@ func _update_animation() -> void:
 
 func _do_jump() -> void:
 	velocity.y = jump_velocity
+	_contact_vertical_velocity = velocity.y
+	_last_descending_physics_frame = -1000
 	coyote_timer.stop()
 	jump_buffer_timer.stop()
 
 
 func bounce() -> void:
+	if _is_dead:
+		return
 	velocity.y = jump_velocity * bounce_velocity_factor
+	_contact_vertical_velocity = velocity.y
+	_last_descending_physics_frame = -1000
+
+
+func launch(vertical_velocity: float) -> void:
+	## Stage springs use the same guarded vertical-impulse entry point.
+	if _is_dead:
+		return
+	velocity.y = vertical_velocity
+	_contact_vertical_velocity = velocity.y
+	_last_descending_physics_frame = -1000
+	coyote_timer.stop()
+	jump_buffer_timer.stop()
 
 
 func power_up() -> void:
@@ -111,27 +162,29 @@ func power_up() -> void:
 	power_state = PowerState.SUPER
 
 
-func take_damage() -> void:
+func take_damage() -> bool:
 	## Shared damage entrypoint: enemies/hazards call this instead of die()
 	## directly. SUPER loses its power-up and gets a brief invincibility
 	## window (with a blinking sprite); SMALL dies outright.
 	if _is_dead or _invincible:
-		return
+		return false
 	if power_state == PowerState.SUPER:
 		power_state = PowerState.SMALL
 		_start_invincibility()
 	else:
 		die()
+	return true
 
 
-func die() -> void:
+func die() -> bool:
 	if _is_dead:
-		return
+		return false
 	_is_dead = true
 	set_physics_process(false)
 	sprite.play("death")
 	died.emit()
 	Game.player_died()
+	return true
 
 
 func _start_invincibility() -> void:
