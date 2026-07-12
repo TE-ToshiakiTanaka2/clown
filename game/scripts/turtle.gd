@@ -7,6 +7,8 @@ class_name Turtle
 
 enum State { WALK, SHELL, SLIDING }
 
+const SHELL_DEFEAT_SCORE: int = 200
+
 @export var walk_speed: float = 40.0
 @export var slide_speed: float = 220.0
 @export var shell_revert_sec: float = 5.0
@@ -20,6 +22,7 @@ enum State { WALK, SHELL, SLIDING }
 
 var state: State = State.WALK
 var direction: int = -1
+var _defeated: bool = false
 var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 
@@ -90,12 +93,13 @@ func _on_hit_area_body_entered(body: Node) -> void:
 
 
 func _on_enemy_hit_area_body_entered(body: Node) -> void:
+	# Score is awarded by each victim's defeat_by_shell(), not here, so a
+	# defeat is worth the same no matter which shell delivered it.
 	if state != State.SLIDING:
 		return
 	if body == self or not body.has_method("defeat_by_shell"):
 		return
 	body.defeat_by_shell()
-	Game.add_score(100)
 
 
 func _enter_shell() -> void:
@@ -110,11 +114,28 @@ func _enter_sliding(player: Player) -> void:
 	direction = 1 if player.global_position.x < global_position.x else -1
 	sprite.play("shell")
 	shell_timer.stop()
+	# Enemies already overlapping when the shell is kicked never re-trigger
+	# body_entered, so sweep the current overlaps once.
+	for body in enemy_hit_area.get_overlapping_bodies():
+		_on_enemy_hit_area_body_entered(body)
 
 
 func defeat_by_shell() -> void:
 	## Duck-typed defeat entrypoint: hit by another sliding shell.
-	_enter_shell()
+	if _defeated:
+		return
+	_defeated = true
+	Game.add_score(SHELL_DEFEAT_SCORE)
+	shell_timer.stop()
+	state = State.SHELL
+	sprite.play("shell")
+	sprite.flip_v = true
+	set_physics_process(false)
+	$CollisionShape2D.set_deferred("disabled", true)
+	stomp_area.set_deferred("monitoring", false)
+	hit_area.set_deferred("monitoring", false)
+	enemy_hit_area.set_deferred("monitoring", false)
+	get_tree().create_timer(0.4).timeout.connect(queue_free)
 
 
 func _on_shell_timer_timeout() -> void:

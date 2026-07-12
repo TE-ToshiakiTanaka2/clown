@@ -28,6 +28,10 @@ func _ready() -> void:
 	_remaining = count
 	_rest_position = position
 	hit_area.body_entered.connect(_on_hit_area_body_entered)
+	if _remaining <= 0:
+		push_warning("QuestionBlock: count <= 0, starting already used")
+		_set_used()
+		return
 	sprite.play("question")
 
 
@@ -72,6 +76,7 @@ func _spawn_coin_pop() -> void:
 func _spawn_item(kind: Mushroom.Kind) -> void:
 	var mushroom := MUSHROOM_SCENE.instantiate() as Mushroom
 	mushroom.kind = kind
+	mushroom.rise_from_block = true
 	mushroom.position = position
 	get_parent().add_child(mushroom)
 
