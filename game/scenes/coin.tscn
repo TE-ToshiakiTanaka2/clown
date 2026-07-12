@@ -1,21 +1,43 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/coin.gd" id="1_coin"]
-
-[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_coin"]
-size = Vector2(12, 12)
+[ext_resource type="Texture2D" path="res://assets/sprites/coin_0.png" id="2_coin0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/coin_1.png" id="3_coin1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/coin_2.png" id="4_coin2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/coin_3.png" id="5_coin3"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_coin"]
 radius = 6.0
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_coin"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_coin0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_coin1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_coin2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_coin3")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 8.0
+}]
 
 [node name="Coin" type="Area2D"]
 collision_layer = 8
 collision_mask = 2
 script = ExtResource("1_coin")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-modulate = Color(1, 0.85, 0.1, 1)
-texture = SubResource("PlaceholderTexture2D_coin")
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_coin")
+animation = &"spin"
+autoplay = "spin"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_coin")

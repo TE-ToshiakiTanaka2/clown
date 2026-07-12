@@ -14,6 +14,7 @@ signal died
 
 @onready var coyote_timer: Timer = $CoyoteTimer
 @onready var jump_buffer_timer: Timer = $JumpBufferTimer
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
 var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var _is_dead: bool = false
@@ -62,6 +63,18 @@ func _physics_process(delta: float) -> void:
 		velocity.y *= jump_cut_factor
 
 	move_and_slide()
+	_update_animation()
+
+
+func _update_animation() -> void:
+	if velocity.x != 0.0:
+		sprite.flip_h = velocity.x < 0.0
+	if not is_on_floor():
+		sprite.play("jump")
+	elif absf(velocity.x) > 1.0:
+		sprite.play("run")
+	else:
+		sprite.play("idle")
 
 
 func _do_jump() -> void:
@@ -79,5 +92,6 @@ func die() -> void:
 		return
 	_is_dead = true
 	set_physics_process(false)
+	sprite.play("death")
 	died.emit()
 	Game.player_died()
