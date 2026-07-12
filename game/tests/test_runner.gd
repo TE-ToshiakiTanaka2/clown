@@ -153,16 +153,20 @@ func _test_physics_contact_resolution() -> void:
 	var stomp_goomba := goomba_scene.instantiate()
 	var stomp_player := player_scene.instantiate() as Player
 	stomp_goomba.position = Vector2.ZERO
-	stomp_player.position = Vector2(0.0, -25.0)
-	stomp_player.velocity.y = 100.0
+	stomp_player.position = Vector2(0.0, -60.0)
 	stomp_fixture.add_child(stomp_goomba)
 	stomp_fixture.add_child(stomp_player)
 	get_tree().root.add_child(stomp_fixture)
 	stomp_goomba.set_physics_process(false)
-	stomp_player.set_physics_process(false)
-	await get_tree().physics_frame
-	await get_tree().physics_frame
-	_assert_true(stomp_goomba.get("_squashed"), "physical top contact squashes Goomba")
+	for _frame in 30:
+		await get_tree().physics_frame
+		if stomp_goomba.get("_squashed") or stomp_player.is_dead():
+			break
+	_assert_true(
+		stomp_goomba.get("_squashed"),
+		"physical top contact squashes Goomba"
+	)
+	_assert_false(stomp_player.is_dead(), "natural falling stomp does not damage player")
 	_assert_true(stomp_player.velocity.y < 0.0, "physical stomp bounces player")
 	stomp_fixture.queue_free()
 	await get_tree().process_frame
@@ -171,16 +175,17 @@ func _test_physics_contact_resolution() -> void:
 	var turtle := turtle_scene.instantiate() as Turtle
 	var turtle_player := player_scene.instantiate() as Player
 	turtle.position = Vector2.ZERO
-	turtle_player.position = Vector2(0.0, -25.0)
-	turtle_player.velocity.y = 100.0
+	turtle_player.position = Vector2(0.0, -60.0)
 	turtle_fixture.add_child(turtle)
 	turtle_fixture.add_child(turtle_player)
 	get_tree().root.add_child(turtle_fixture)
 	turtle.set_physics_process(false)
-	turtle_player.set_physics_process(false)
-	await get_tree().physics_frame
-	await get_tree().physics_frame
+	for _frame in 30:
+		await get_tree().physics_frame
+		if turtle.state != Turtle.State.WALK or turtle_player.is_dead():
+			break
 	_assert_equal(turtle.state, Turtle.State.SHELL, "physical top contact shells Turtle")
+	_assert_false(turtle_player.is_dead(), "natural Turtle stomp does not damage player")
 	_assert_true(turtle_player.velocity.y < 0.0, "Turtle stomp bounces player")
 	turtle_fixture.queue_free()
 	await get_tree().process_frame

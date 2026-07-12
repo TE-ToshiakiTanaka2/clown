@@ -15,6 +15,7 @@ enum ContactOutcome { IGNORE, STOMP, DAMAGE }
 
 const INVINCIBILITY_SEC: float = 1.5
 const INVINCIBILITY_BLINK_SEC: float = 0.1
+const STOMP_GRACE_SEC: float = 0.1
 
 @export var speed: float = 150.0
 @export var acceleration: float = 1000.0
@@ -33,6 +34,11 @@ var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var _is_dead: bool = false
 var _half_height: float = 0.0
 var _invincible: bool = false
+# `move_and_slide()` can zero velocity.y before an Area2D body_entered signal is
+# delivered. Preserve the velocity used for the move so a real falling stomp is
+# not misclassified as stationary side damage.
+var _contact_vertical_velocity: float = 0.0
+var _stomp_grace_left: float = 0.0
 
 
 func _ready() -> void:
@@ -55,7 +61,8 @@ func classify_enemy_contact(enemy_center_y: float) -> ContactOutcome:
 	## invincible players never affect or take damage from an enemy contact.
 	if _is_dead or _invincible:
 		return ContactOutcome.IGNORE
-	if velocity.y > 0.0 and feet_global_y() <= enemy_center_y:
+	var was_descending := maxf(velocity.y, _contact_vertical_velocity) > 0.0 or _stomp_grace_left > 0.0
+	if was_descending and feet_global_y() <= enemy_center_y:
 		return ContactOutcome.STOMP
 	return ContactOutcome.DAMAGE
 
@@ -97,6 +104,11 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= jump_cut_factor
 
+	_contact_vertical_velocity = velocity.y
+	if velocity.y > 0.0:
+		_stomp_grace_left = STOMP_GRACE_SEC
+	else:
+		_stomp_grace_left = maxf(0.0, _stomp_grace_left - delta)
 	move_and_slide()
 	_update_animation()
 
@@ -123,6 +135,8 @@ func bounce() -> void:
 	if _is_dead:
 		return
 	velocity.y = jump_velocity * bounce_velocity_factor
+	_contact_vertical_velocity = velocity.y
+	_stomp_grace_left = 0.0
 
 
 func launch(vertical_velocity: float) -> void:
@@ -130,6 +144,8 @@ func launch(vertical_velocity: float) -> void:
 	if _is_dead:
 		return
 	velocity.y = vertical_velocity
+	_contact_vertical_velocity = velocity.y
+	_stomp_grace_left = 0.0
 	coyote_timer.stop()
 	jump_buffer_timer.stop()
 
