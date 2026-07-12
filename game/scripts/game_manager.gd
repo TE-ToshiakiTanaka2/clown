@@ -22,7 +22,9 @@ func player_died() -> void:
 	lives -= 1
 	lives_changed.emit(lives)
 	if lives > 0:
-		get_tree().reload_current_scene()
+		# Deferred: player_died() is reached from physics signal callbacks
+		# (Area2D body_entered), where reloading the tree is unsafe.
+		get_tree().reload_current_scene.call_deferred()
 	else:
 		game_over.emit()
 
@@ -36,4 +38,4 @@ func reset_run() -> void:
 	lives = STARTING_LIVES
 	score_changed.emit(score)
 	lives_changed.emit(lives)
-	get_tree().reload_current_scene()
+	get_tree().reload_current_scene.call_deferred()

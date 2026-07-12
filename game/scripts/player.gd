@@ -19,6 +19,15 @@ var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var _is_dead: bool = false
 
 
+func _ready() -> void:
+	Game.level_cleared.connect(_on_level_cleared)
+
+
+func _on_level_cleared() -> void:
+	velocity = Vector2.ZERO
+	set_physics_process(false)
+
+
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		return
