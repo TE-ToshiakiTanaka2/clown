@@ -28,3 +28,17 @@ None.
 ## Suggestions
 
 None.
+
+---
+
+## Fixes Applied
+
+- Captured projectile distance origin during `initialize()` after Cannon assigns the muzzle position, so Stage 4 shots use a local travel bound.
+- Added physics-driven coverage for far-stage Cannon shots, world/player impacts, Spiny wall stun/recovery, shell defeat idempotency, freed targets, and freed Cannon owners.
+- Redrew the two ember frames with visibly and byte-distinct tail silhouettes and added an asset-difference assertion.
+- Expanded the clean headless regression suite from 209 to 226 passing checks.
+- Fix commit: `c91e695`
+
+## Post-fix Validation
+
+**Overall**: APPROVE — all Critical, Major, and Minor findings are resolved.
