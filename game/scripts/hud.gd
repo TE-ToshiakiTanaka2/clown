@@ -1,11 +1,11 @@
 extends CanvasLayer
 ## HUD overlay: score/lives display plus centered status messages.
+## Level-clear and game-over transitions are driven by Game (game_manager.gd);
+## this HUD only reflects the current state, it does not trigger transitions.
 
 @onready var score_label: Label = $Margin/VBox/ScoreLabel
 @onready var lives_label: Label = $Margin/VBox/LivesLabel
 @onready var message_label: Label = $MessageLabel
-
-var _game_over: bool = false
 
 
 func _ready() -> void:
@@ -28,16 +28,8 @@ func _on_lives_changed(new_lives: int) -> void:
 
 
 func _on_game_over() -> void:
-	_game_over = true
-	message_label.text = "GAME OVER\nPress Jump to Retry"
+	message_label.text = "GAME OVER"
 
 
 func _on_level_cleared() -> void:
 	message_label.text = "COURSE CLEAR!"
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if _game_over and event.is_action_pressed("jump"):
-		_game_over = false
-		message_label.text = ""
-		Game.reset_run()
