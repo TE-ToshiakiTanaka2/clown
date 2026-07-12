@@ -1,42 +1,52 @@
 # Shared Architecture Snapshot
 
-最終更新: #6(タイトル画面とステージ選択画面によるゲームフロー整備)
+最終更新: #14（4ステージ化・接触ルール・ステージギミック）
 
 ## リポジトリ構成
 
-- `game/` — Godot 4.7 プロジェクト(2Dプラットフォーマー)。エントリは `scenes/title_screen.tscn` → `scenes/stage_select.tscn` → `scenes/level_N.tscn`。`main.tscn` は #6 で廃止。
-- `.tarnished/workflows/` — エージェント中立のライフサイクル文書(issue → design → implement → review → pr)。
-- `docs/design/#N/` — Issue ごとの設計成果物。`docs/design/shared/` — プロジェクト全体の累積スナップショット。
-- `docs/review/#N/` — クロスエージェントレビュー成果物。
+- `game/` — Godot 4.7 の2Dプラットフォーマー。タイトル → ステージ選択 →
+  `level_1`〜`level_4` の順で進行する。
+- `game/scenes/` — 画面、レベル、プレイヤー、敵、アイテム、HUD、再利用可能な
+  足場／バネ／ハザード。
+- `game/scripts/` — エンティティロジックと `Game` オートロード。
+- `game/tests/` — Godot headless で動くルール・シーン契約テスト。
+- `docs/design/shared/` — 累積設計。`docs/design/#N/` — Issue 単位の差分。
 
-## エージェント分担(dual プロファイル)
+## 実行時アーキテクチャ
 
-| 役割 | エージェント |
-|------|--------------|
-| 設計 | Claude (Fable) |
-| 実装 | Claude (Sonnet 5 サブエージェント) |
-| レビュー | Codex CLI (`gpt-5.6-sol`, `.codex/config.toml`) |
+- **フロー所有者**: `Game` がスコア、残機、現在面、解放面、保存、遷移を管理。
+- **レベルレジストリ**: 1〜4 を各 `level_N.tscn` に対応付け、最大キーで最終面と
+  保存値の上限を決める。
+- **終端イベント**: `_level_ending` と `_flow_epoch` で死亡／クリアの多重処理と
+  過去シーンの遅延遷移を防ぐ。
+- **接触契約**: 敵ごとにプレイヤー用 Area は1つ。`Player` が `IGNORE` / `STOMP` /
+  `DAMAGE` を分類し、敵が状態固有の処理を行う。
+- **ダメージ契約**: SMALL は1ミス、SUPER は SMALL 化＋1.5秒無敵。死亡中／無敵中は
+  再ダメージなし。溶岩・落下は `die()`、トゲは `take_damage()`。
+- **レベル契約**: 各面は `Player`（Camera2D を内包）、`Flag`、`KillZone`、`HUD` を持つ。
+- **ギミック**: solid/moving/falling platform、spring、damage hazard は PackedScene と
+  export パラメータで再利用し、レベルスクリプトへ依存しない。
 
-## ゲームアーキテクチャ(#6 時点)
+## 物理レイヤー
 
-- **autoload**: `Game`(`scripts/game_manager.gd`)がスコア・残機・ゲーム進行・画面遷移を集中管理。シーン遷移を跨いで状態維持。
-- **結合規約**: エンティティ間の直接参照は避け、`Game` のシグナル(`score_changed`, `lives_changed`, `game_over`, `level_cleared`)経由で HUD/画面へ伝播。
-- **物理レイヤー**: 1=world, 2=player, 3=enemy, 4=pickup。
-- **シーン責務**: 1シーン=1エンティティ(player / goomba / coin / flag / hud / level_1)+ 画面(title_screen / stage_select)。
-- **アート**: `assets/sprites/` のドット絵(#5)。差し替えは各シーンの Sprite2D/AnimatedSprite2D/TextureRect のテクスチャ交換のみで済む構造。
+| Layer | Name | Usage |
+| --- | --- | --- |
+| 1 | world | 地形・足場 |
+| 2 | player | プレイヤー本体 |
+| 3 | enemy | 敵本体 |
+| 4 | pickup | コイン・アイテム |
 
-### Game のゲームフロー API(#6)
+Area は必要な body layer のみを mask し、自身の layer は原則0とする。
 
-- `LEVELS: Dictionary[int, String]` — レベル番号→シーンパスのレジストリ。#6 時点は `1: "res://scenes/level_1.tscn"` のみ登録(`2` は #8 で追加)。`max_level()` はレジストリのサイズ由来。
-- `current_level: int` — 0 はレベル外(タイトル/ステージ選択)。
-- `unlocked_level: int` — 到達可能な最大レベル。`user://save.cfg` に `ConfigFile` で永続化(`_ready` でロード)。
-- `start_level(n)` / `retry_level()` / `go_to_title()` / `go_to_stage_select()` / `clear_level()` — すべて `change_scene_to_file` を `call_deferred` 経由で呼ぶため、物理コールバック中でも安全に呼べる。
-- 死亡: `lives > 0` なら `retry_level()`、`lives == 0` なら `game_over` emit 後 2 秒(`SceneTreeTimer`)で `go_to_title()`(score/lives リセット)。
-- クリア: `level_cleared` emit → `unlocked_level` をレジストリ上限までクランプして更新・保存 → 数秒後に `go_to_stage_select()`(score/lives は維持)。
-- タイトルとステージ選択は `Control` ルートの通常シーン(`CanvasLayer` 不要)。`Game` へは API 呼び出し(`start_level` 等)で片方向にアクセスし、シーン側から `Game` のシグナルへ接続する場合はノード解放時に自動切断される通常 `connect` のみを使う(autoload → 一時ノードへの参照保持は禁止)。現状シグナル接続を行うのは HUD のみで、title/stage_select は入力時の API 呼び出しと表示時の状態読み取りだけを行う。
-- 死亡/クリアの多重通知対策: `Game` は `_level_ending` フラグで終端イベント(ゲームオーバー/クリア)を 1 レベルにつき 1 回だけ受理し、`_flow_epoch` で画面遷移後に残った遅延タイマーを無効化する。
+## 画面と進行
+
+- ステージ選択は4パネルを表示し、`unlocked_level` より大きい面を LOCKED にする。
+- クリアすると次の登録面だけを解放し、2.5秒後にステージ選択へ戻る。
+- 4面クリア時のみ HUD が全クリア文言を表示する。
+- ステージ選択に操作と接触ルールを常時表示する。
 
 ## ツールチェーン
 
-- Godot 4.7 headless(`/usr/local/bin/godot`)。検証: `godot --headless --path game --quit-after 120`。
-- godot-mcp(Claude: `.mcp.json` / Codex: `.codex/config.toml`)— シーン生成・実行・デバッグ出力取得。
+- Godot 4.7 stable。初回は `godot --headless --path game --import`。
+- 実行検証はプロジェクト本体、各レベル直接ロード、`game/tests/test_runner.gd`。
+- `SCRIPT ERROR`、parse error、resource load error は失敗として扱う。
