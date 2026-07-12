@@ -23,3 +23,7 @@
 
 # Local screenshots (manual UI testing)
 screenshots/
+
+# Godot 4 project (also has its own game/.gitignore; kept here for
+# discoverability since the import cache is regenerated per-OS)
+game/.godot/

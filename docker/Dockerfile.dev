@@ -10,6 +10,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     rsync \
     jq \
+    unzip \
+    libfontconfig1 \
+    libxcursor1 \
+    libxinerama1 \
+    libxrandr2 \
+    libxi6 \
+    libgl1 \
+    libglu1-mesa \
+    libasound2t64 \
+    libpulse0 \
+    libdbus-1-3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user 'vscode' for DevContainer compatibility
