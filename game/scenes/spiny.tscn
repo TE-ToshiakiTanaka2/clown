@@ -1,0 +1,73 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/spiny.gd" id="1_spiny"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spiny_walk_0.png" id="2_walk0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spiny_walk_1.png" id="3_walk1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spiny_walk_2.png" id="4_walk2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spiny_windup.png" id="5_windup"]
+[ext_resource type="Texture2D" path="res://assets/sprites/spiny_charge.png" id="6_charge"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(22, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_contact"]
+size = Vector2(24, 24)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_spiny"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_walk0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_walk1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_walk2")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_windup")
+}],
+"loop": true,
+"name": &"windup",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_charge")
+}],
+"loop": true,
+"name": &"charge",
+"speed": 5.0
+}]
+
+[node name="Spiny" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_spiny")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_spiny")
+animation = &"walk"
+autoplay = "walk"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 2)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="FloorRay" type="RayCast2D" parent="."]
+position = Vector2(-12, 8)
+target_position = Vector2(0, 12)
+collision_mask = 1
+
+[node name="ContactArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea"]
+shape = SubResource("RectangleShape2D_contact")

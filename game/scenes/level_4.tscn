@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/goomba.tscn" id="2_goomba"]
@@ -13,6 +13,9 @@
 [ext_resource type="PackedScene" path="res://scenes/falling_platform.tscn" id="11_falling"]
 [ext_resource type="PackedScene" path="res://scenes/spring.tscn" id="12_spring"]
 [ext_resource type="PackedScene" path="res://scenes/damage_hazard.tscn" id="13_hazard"]
+[ext_resource type="PackedScene" path="res://scenes/swoop_bat.tscn" id="14_bat"]
+[ext_resource type="PackedScene" path="res://scenes/spiny.tscn" id="15_spiny"]
+[ext_resource type="PackedScene" path="res://scenes/cannon.tscn" id="16_cannon"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kill"]
 size = Vector2(3840, 80)
@@ -218,6 +221,27 @@ position = Vector2(3110, 276)
 
 [node name="Goomba5" parent="Enemies" instance=ExtResource("2_goomba")]
 position = Vector2(3310, 276)
+
+[node name="SwoopBat1" parent="Enemies" instance=ExtResource("14_bat")]
+position = Vector2(1500, 120)
+
+[node name="Spiny1" parent="Enemies" instance=ExtResource("15_spiny")]
+position = Vector2(940, 276)
+
+[node name="Spiny2" parent="Enemies" instance=ExtResource("15_spiny")]
+position = Vector2(2160, 276)
+
+[node name="Spiny3" parent="Enemies" instance=ExtResource("15_spiny")]
+position = Vector2(3440, 276)
+
+[node name="Cannon1" parent="Enemies" instance=ExtResource("16_cannon")]
+position = Vector2(520, 276)
+
+[node name="Cannon2" parent="Enemies" instance=ExtResource("16_cannon")]
+position = Vector2(1880, 276)
+
+[node name="Cannon3" parent="Enemies" instance=ExtResource("16_cannon")]
+position = Vector2(3220, 276)
 
 [node name="Coins" type="Node2D" parent="."]
 
