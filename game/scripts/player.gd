@@ -15,7 +15,7 @@ enum ContactOutcome { IGNORE, STOMP, DAMAGE }
 
 const INVINCIBILITY_SEC: float = 1.5
 const INVINCIBILITY_BLINK_SEC: float = 0.1
-const STOMP_GRACE_SEC: float = 0.1
+const STOMP_GRACE_PHYSICS_FRAMES: int = 6
 
 @export var speed: float = 150.0
 @export var acceleration: float = 1000.0
@@ -38,7 +38,7 @@ var _invincible: bool = false
 # delivered. Preserve the velocity used for the move so a real falling stomp is
 # not misclassified as stationary side damage.
 var _contact_vertical_velocity: float = 0.0
-var _stomp_grace_left: float = 0.0
+var _last_descending_physics_frame: int = -1000
 
 
 func _ready() -> void:
@@ -61,7 +61,11 @@ func classify_enemy_contact(enemy_center_y: float) -> ContactOutcome:
 	## invincible players never affect or take damage from an enemy contact.
 	if _is_dead or _invincible:
 		return ContactOutcome.IGNORE
-	var was_descending := maxf(velocity.y, _contact_vertical_velocity) > 0.0 or _stomp_grace_left > 0.0
+	var frames_since_descent := Engine.get_physics_frames() - _last_descending_physics_frame
+	var was_descending := (
+		maxf(velocity.y, _contact_vertical_velocity) > 0.0
+		or frames_since_descent <= STOMP_GRACE_PHYSICS_FRAMES
+	)
 	if was_descending and feet_global_y() <= enemy_center_y:
 		return ContactOutcome.STOMP
 	return ContactOutcome.DAMAGE
@@ -106,9 +110,7 @@ func _physics_process(delta: float) -> void:
 
 	_contact_vertical_velocity = velocity.y
 	if velocity.y > 0.0:
-		_stomp_grace_left = STOMP_GRACE_SEC
-	else:
-		_stomp_grace_left = maxf(0.0, _stomp_grace_left - delta)
+		_last_descending_physics_frame = Engine.get_physics_frames()
 	move_and_slide()
 	_update_animation()
 
@@ -136,7 +138,7 @@ func bounce() -> void:
 		return
 	velocity.y = jump_velocity * bounce_velocity_factor
 	_contact_vertical_velocity = velocity.y
-	_stomp_grace_left = 0.0
+	_last_descending_physics_frame = -1000
 
 
 func launch(vertical_velocity: float) -> void:
@@ -145,7 +147,7 @@ func launch(vertical_velocity: float) -> void:
 		return
 	velocity.y = vertical_velocity
 	_contact_vertical_velocity = velocity.y
-	_stomp_grace_left = 0.0
+	_last_descending_physics_frame = -1000
 	coyote_timer.stop()
 	jump_buffer_timer.stop()
 

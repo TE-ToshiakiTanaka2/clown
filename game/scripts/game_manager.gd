@@ -164,8 +164,8 @@ func _save_progress() -> void:
 		push_error("Game: failed to save progress to %s (error %d)" % [SAVE_PATH, err])
 
 
-func _load_progress() -> void:
+func _load_progress(path: String = SAVE_PATH) -> void:
 	var config := ConfigFile.new()
-	if config.load(SAVE_PATH) == OK:
+	if config.load(path) == OK:
 		var saved: int = int(config.get_value("progress", "unlocked_level", 1))
 		unlocked_level = clampi(saved, 1, max_level())

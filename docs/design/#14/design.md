@@ -82,14 +82,17 @@ game/
    `take_damage`; `IGNORE` has no side effect.
 4. SMALL damage calls `die` once and `Game.player_died` decrements one life.
    SUPER damage changes to SMALL and starts invincibility without losing a life.
-5. Re-entry while dead or invincible resolves to `IGNORE`.
+5. Re-entry while dead or invincible resolves to `IGNORE`. The falling state is
+   retained for a fixed six-physics-frame window because `move_and_slide()`
+   clears vertical velocity before the Area2D signal is delivered.
 
 Progression remains flag → `Game.clear_level()` → unlock next registered number →
 stage select. Stage 4 is final because `is_final_level()` uses the registry max.
 
 ## Error Handling
 
-- All damage/death paths are idempotent for dead or invincible players.
+- Normal damage is idempotent for dead or invincible players. Intentional
+  instant-miss paths (lava and fall boundaries) bypass invincibility via `die()`.
 - Platform periods and delays are clamped to positive minimums.
 - Missing or locked level requests retain warning-and-return behavior.
 - Hazard callbacks ignore non-player bodies.

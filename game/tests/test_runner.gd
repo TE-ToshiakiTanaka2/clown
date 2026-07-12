@@ -13,6 +13,7 @@ func _ready() -> void:
 func _run() -> void:
 	await get_tree().process_frame
 	_test_registry_and_progression()
+	_test_save_compatibility()
 	await _test_player_damage_rules()
 	_test_enemy_scene_contract()
 	await _test_physics_contact_resolution()
@@ -49,6 +50,27 @@ func _test_registry_and_progression() -> void:
 	_assert_equal(Game._unlocked_after_clear(4, 4), 4, "stage 4 unlock stays clamped")
 
 
+func _test_save_compatibility() -> void:
+	var original_unlocked: int = Game.unlocked_level
+	var test_path := "user://issue14-test-save-%d.cfg" % Time.get_ticks_usec()
+	var config := ConfigFile.new()
+	config.set_value("progress", "unlocked_level", 2)
+	_assert_equal(config.save(test_path), OK, "temporary legacy save is writable")
+	Game._load_progress(test_path)
+	_assert_equal(Game.unlocked_level, 2, "two-stage legacy save remains valid")
+	config.set_value("progress", "unlocked_level", 99)
+	_assert_equal(config.save(test_path), OK, "temporary out-of-range save is writable")
+	Game._load_progress(test_path)
+	_assert_equal(Game.unlocked_level, 4, "out-of-range save clamps to stage 4")
+	config.set_value("progress", "unlocked_level", -5)
+	_assert_equal(config.save(test_path), OK, "temporary negative save is writable")
+	Game._load_progress(test_path)
+	_assert_equal(Game.unlocked_level, 1, "negative save clamps to stage 1")
+	var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(test_path))
+	_assert_equal(remove_error, OK, "temporary save is removed")
+	Game.unlocked_level = original_unlocked
+
+
 func _test_player_damage_rules() -> void:
 	var player_scene := load("res://scenes/player.tscn") as PackedScene
 	_assert_not_null(player_scene, "player scene loads")
@@ -57,6 +79,7 @@ func _test_player_damage_rules() -> void:
 
 	var player := player_scene.instantiate() as Player
 	get_tree().root.add_child(player)
+	player.set_physics_process(false)
 	await get_tree().process_frame
 	player.global_position = Vector2.ZERO
 	player.velocity.y = 100.0
@@ -93,12 +116,47 @@ func _test_player_damage_rules() -> void:
 	_assert_true(small_player.is_dead(), "SMALL hit is a miss")
 	_assert_false(small_player.take_damage(), "dead player rejects repeated damage")
 	_assert_false(small_player.die(), "death notification is idempotent")
+	_assert_equal(
+		small_player.classify_enemy_contact(small_player.feet_global_y() + 1.0),
+		Player.ContactOutcome.IGNORE,
+		"dead player contact is ignored"
+	)
 	small_player.queue_free()
 	await get_tree().process_frame
 
+	Game._level_ending = false
+
+	var goomba_scene := load("res://scenes/goomba.tscn") as PackedScene
+	_assert_not_null(goomba_scene, "simultaneous-contact enemy scene loads")
+	var simultaneous_fixture := Node2D.new()
+	var simultaneous_player := player_scene.instantiate() as Player
+	var enemy_a := goomba_scene.instantiate()
+	var enemy_b := goomba_scene.instantiate()
+	simultaneous_player.position = Vector2(20.0, 0.0)
+	enemy_a.position = Vector2.ZERO
+	enemy_b.position = Vector2.ZERO
+	simultaneous_fixture.add_child(enemy_a)
+	simultaneous_fixture.add_child(enemy_b)
+	simultaneous_fixture.add_child(simultaneous_player)
+	Game.lives = 1
+	Game.current_level = 4
+	get_tree().root.add_child(simultaneous_fixture)
+	enemy_a.set_physics_process(false)
+	enemy_b.set_physics_process(false)
+	simultaneous_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_equal(Game.lives, 0, "two simultaneous enemies consume only one life")
+	_assert_true(simultaneous_player.is_dead(), "simultaneous contact accepts one death")
+	simultaneous_fixture.queue_free()
+	await get_tree().process_frame
+	Game._flow_epoch += 1
+	Game._level_ending = false
+	Game.current_level = 0
+	Game.reset_run()
+
 	# Exercise the last-life rule without waiting for or allowing its delayed
 	# title transition to mutate the test tree.
-	Game._level_ending = false
 	Game.lives = 1
 	Game.current_level = 4
 	Game.player_died()
@@ -242,10 +300,14 @@ func _test_gimmick_behavior() -> void:
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 	_assert_true(falling.position.y > fall_y, "falling platform moves downward")
+	trigger_player.position = Vector2(1000.0, 0.0)
+	await get_tree().physics_frame
 	falling._on_reset_timer_timeout()
+	await get_tree().physics_frame
 	await get_tree().physics_frame
 	_assert_equal(falling.position, Vector2.ZERO, "falling platform returns to origin")
 	_assert_equal(falling.state, FallingPlatform.State.READY, "falling platform re-arms")
+	_assert_true(falling.trigger_area.monitoring, "falling platform trigger monitoring re-arms")
 	falling.queue_free()
 	trigger_player.queue_free()
 	await get_tree().process_frame

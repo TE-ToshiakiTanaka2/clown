@@ -15,7 +15,7 @@
 
 | API | Signature | Contract |
 | --- | --- | --- |
-| `classify_enemy_contact` | `(enemy_center_y: float) -> ContactOutcome` | Pure classification from player state and motion. |
+| `classify_enemy_contact` | `(enemy_center_y: float) -> ContactOutcome` | Classification from player state, position, and a fixed recent physics-frame motion window. |
 | `take_damage` | `() -> bool` | Applies SMALL death or SUPER downgrade at most once. |
 | `die` | `() -> bool` | Accepts one death and notifies `Game`; repeats are no-ops. |
 | `bounce` | `() -> void` | Applies stomp rebound velocity to a live player. |
