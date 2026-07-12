@@ -17,10 +17,19 @@ signal died
 
 var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var _is_dead: bool = false
+var _half_height: float = 0.0
 
 
 func _ready() -> void:
 	Game.level_cleared.connect(_on_level_cleared)
+	var collision_shape: CollisionShape2D = $CollisionShape2D
+	var rect := collision_shape.shape as RectangleShape2D
+	_half_height = collision_shape.position.y + rect.size.y / 2.0
+
+
+func feet_global_y() -> float:
+	## Global y of the player's bottom edge; used by enemies for stomp checks.
+	return global_position.y + _half_height
 
 
 func _on_level_cleared() -> void:

@@ -40,7 +40,7 @@ func _reverse_direction() -> void:
 
 
 func _is_stomp(body: Node) -> bool:
-	return body is Player and body.velocity.y > 0.0 and body.global_position.y < global_position.y
+	return body is Player and body.velocity.y > 0.0 and body.feet_global_y() < global_position.y
 
 
 func _on_stomp_area_body_entered(body: Node) -> void:
@@ -57,13 +57,12 @@ func _on_hit_area_body_entered(body: Node) -> void:
 		body.die()
 
 
-func squash(player: Node) -> void:
+func squash(player: Player) -> void:
 	if _squashed:
 		return
 	_squashed = true
 	Game.add_score(200)
-	if player.has_method("bounce"):
-		player.bounce()
+	player.bounce()
 	stomp_area.set_deferred("monitoring", false)
 	hit_area.set_deferred("monitoring", false)
 	set_collision_layer_value(3, false)
