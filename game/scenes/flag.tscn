@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/flag.gd" id="1_flag"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_flag"]
+size = Vector2(8, 48)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_flag"]
+size = Vector2(8, 48)
+
+[node name="Flag" type="Area2D"]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_flag")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -24)
+modulate = Color(0.1, 0.7, 0.15, 1)
+texture = SubResource("PlaceholderTexture2D_flag")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -24)
+shape = SubResource("RectangleShape2D_flag")

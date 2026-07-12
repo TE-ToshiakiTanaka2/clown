@@ -55,6 +55,30 @@ codex --dangerously-bypass-approvals-and-sandbox
 
 Do not make this the project default; it disables approval prompts and sandboxing.
 
+## Godot MCP Server
+
+The `godot` MCP server (godot-mcp) is registered for both Claude Code
+(`.mcp.json`) and Codex CLI (`.codex/config.toml`), backed by the headless
+Godot 4 editor at `/usr/local/bin/godot`. Use it per lifecycle phase:
+
+- `design`: `get_godot_version` / `get_project_info` to ground designs in the
+  real project state of `game/`.
+- `implement`: `create_scene` / `add_node` / `save_scene` for scene authoring;
+  `run_project` → `get_debug_output` → `stop_project` for runtime verification.
+- `review`: launch the project and read debug output instead of reviewing the
+  Godot code statically only.
+
+CLI fallback when the MCP server is unavailable:
+
+```bash
+godot --headless --path game --import        # required once per fresh checkout
+godot --headless --path game --quit-after 120
+```
+
+Any `SCRIPT ERROR` or parse error in the output is a failure. Run `--import`
+before execution on a fresh checkout; otherwise `class_name` global-class
+resolution fails with spurious parse errors.
+
 ## Review Responsibilities
 
 When acting as reviewer, check:
