@@ -1,0 +1,41 @@
+{
+  "manifest_version": 1,
+  "tarnished_version": "v0.0.96",
+  "tarnished_commit": "4dae3345ade05e7d2d968823de94324ed682c4d9",
+  "created_at": "2026-07-12T04:27:31Z",
+  "scaffold_options": {
+    "languages": [],
+    "services": [],
+    "github_actions_enabled": true,
+    "auto_tag_enabled": true,
+    "ai_profile": "dual",
+    "codex_enabled": true,
+    "monorepo": false
+  },
+  "files": {
+    ".agents/skills/design/SKILL.md": "sha256:e38b4aa8c57971e948ff0641325bff64e73b83c6998d113720ca046f01ddab1e",
+    ".agents/skills/design/agents/openai.yaml": "sha256:ba4dcb1c4ccd482373ad435f67e08b0933542e7c8c02d3b3832f4bacacfb9be5",
+    ".agents/skills/implement/SKILL.md": "sha256:fc2a38e0f2f6f54637079080e2ddd1a92605cf1939bf6f863943becd56301716",
+    ".agents/skills/implement/agents/openai.yaml": "sha256:2b0d6cbad053950e101ef3b7fa011b6a50ccf715954e04457c852b61107d72f6",
+    ".agents/skills/issue/SKILL.md": "sha256:42f9ea92e57320cec0708002686d3620a0dfe161917235ecb6f7e8624969397e",
+    ".agents/skills/issue/agents/openai.yaml": "sha256:0e620631442b9bf684a651e86f5e8a544e6eab619b688ec38454eaf15b0d9e30",
+    ".agents/skills/pr/SKILL.md": "sha256:bca74deeb32658c79931eab4100adaf270b61f9690195fee95ce219cbe1cc63e",
+    ".agents/skills/pr/agents/openai.yaml": "sha256:decce3b2e5747cb0ddf639737e316f183d7897e19b59d6c8d3491c4ef1bba33c",
+    ".agents/skills/review/SKILL.md": "sha256:0b9a713a8ee023146a893cbe0bf2a90ef864d73ebbad999bff2f5ea70cafede6",
+    ".agents/skills/review/agents/openai.yaml": "sha256:bcf5aec849ef2c418e8106ea4189d7b5ef44a6f552b8430e2e2efce6d4a8248f",
+    ".codex/config.toml": "sha256:4977b06996c341eab18d27ac3c2639d9854e48de36f6d9d9ea29314ed4f4742f",
+    ".devcontainer/scripts/post.sh": "sha256:3f58258b08c4295b6a6f8ab030f70bb8bad6420a62d733ae035c4e6c0ef4f71d",
+    ".devcontainer/scripts/refresh-assets.sh": "sha256:8db4b0c7df1fdc80e9a415f11403f1d7cfcca63f3eb23649cbc2e0f17999c110",
+    ".devcontainer/scripts/setup_codex.sh": "sha256:5f1f3aa4a3150d13cf210a40d9cf56001d92e8ac0a8eab66228a31b2bb87c32a",
+    ".devcontainer/scripts/setup_plugins.sh": "sha256:bf0891e7a48e270abab45db76f4a5b9da13aec45011d0c5f4b329ef3c0128177",
+    ".tarnished/agent-profile.json": "sha256:57ad90c7b5b534a383d760fef064c1df0f83c65b8a56dd4e766f29414ba70efe",
+    ".tarnished/refresh.json": "sha256:ea407101f81c0004c238c6b579610afa81e089e17d83f04ee8f8ca3f4333facf",
+    ".tarnished/workflows/README.md": "sha256:6f2123cba72e43196ef30a02fd28ef9b43787e9c263c3517bdce7f4905243ca0",
+    ".tarnished/workflows/design.md": "sha256:aa82db12fdad142c6ce6104fd6eec20f58f888685ee2152128ec9278a9f87ca3",
+    ".tarnished/workflows/implement.md": "sha256:968922203d84a750bae767e83124c5e0ce1d77bf667b3cc9726423e31f144127",
+    ".tarnished/workflows/issue.md": "sha256:4922142fa379684b50329278a86c28d5175a6fc231931d135d3557c5d98142f1",
+    ".tarnished/workflows/pr.md": "sha256:54599ecee56e3a8d0c000d2450287894e6705f888e1b1fe4c54fb9b9d183a759",
+    ".tarnished/workflows/review.md": "sha256:673067c9610de28e7abe189411a39474e04366ab229bc0fa9d2736913af0fbbb",
+    "docker/Dockerfile.dev": "sha256:8ae8cb6ac0dacec230619801102a0a8b93f6fbcec1ffc16da48272ae4936b8d6"
+  }
+}

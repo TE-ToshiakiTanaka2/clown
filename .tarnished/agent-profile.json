@@ -1,0 +1,6 @@
+{
+  "ai_profile": "dual",
+  "primary_agent": "Claude Code + Codex CLI",
+  "review_agent": "Cross-agent review",
+  "workflow_source": ".tarnished/workflows"
+}

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [],
+    "deny": [
+      "Bash(apt-get:*)",
+      "Bash(apt:*)",
+      "Bash(brew install:*)",
+      "Bash(chmod 777:*)",
+      "Bash(gh repo delete:*)",
+      "Bash(git config --global:*)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo rm -rf:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/deny-check.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": []
+  }
+}

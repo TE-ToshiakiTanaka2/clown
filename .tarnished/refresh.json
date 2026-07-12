@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "upstream": {
+    "repo_url": "https://github.com/TE-ToshiakiTanaka2/tarnished.git",
+    "branch": "develop"
+  },
+  "clone_dir": "/opt/tarnished",
+  "managed_paths": [
+    {
+      "src": "templates/claude/.claude/commands",
+      "dst": ".claude/commands",
+      "overlay": ".claude/commands.local"
+    },
+    {
+      "src": "templates/claude/.claude/skills",
+      "dst": ".claude/skills",
+      "overlay": ".claude/skills.local"
+    },
+    {
+      "src": "templates/claude/.claude/scripts",
+      "dst": ".claude/scripts",
+      "overlay": ".claude/scripts.local"
+    },
+    {
+      "src": "templates/claude/.claude/rules/shell.md",
+      "dst": ".claude/rules/shell.md",
+      "overlay": ".claude/rules.local/shell.md"
+    },
+    {
+      "src": "templates/claude/.claude/agents",
+      "dst": ".claude/agents",
+      "overlay": ".claude/agents.local"
+    },
+    {
+      "src": "templates/claude/.claude/commands/erd",
+      "dst": ".tarnished/workflows/erd",
+      "overlay": ".tarnished/workflows/erd.local"
+    }
+  ]
+}

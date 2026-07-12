@@ -1,0 +1,51 @@
+# =============================================================================
+# Project Integration Workflow (Caller)
+# =============================================================================
+# Calls the reusable workflow from TE-ToshiakiTanaka2/tarnished to automatically
+# link new Issues to GitHub Projects using erd CLI.
+#
+# Prerequisites:
+#   1. Create a GitHub Personal Access Token (classic) with these scopes:
+#      - repo (Full control of private repositories)
+#      - project (Full control of projects)
+#   2. Add the token as a repository secret named PROJECT_TOKEN:
+#      Settings > Secrets and variables > Actions > New repository secret
+#   3. Create .github/project.yml with your project configuration:
+#      ```yaml
+#      default_project:
+#        owner: "your-username-or-org"
+#        number: 1  # Your project number
+#      field_defaults:
+#        Status: "Backlog"
+#        Size: "M"
+#        Priority: "P1"
+#      # Optional: route labeled issues to additional projects
+#      # label_projects:
+#      #   bugfix:
+#      #     owner: "your-username-or-org"
+#      #     number: 2
+#      #     field_defaults:
+#      #       Status: "Todo"
+#      ```
+#
+# For more information about erd: https://github.com/TE-ToshiakiTanaka2/tarnished
+# =============================================================================
+
+name: Project Integration
+
+on:
+  issues:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  call-project-integration:
+    uses: TE-ToshiakiTanaka2/tarnished/.github/workflows/project-integration.yml@develop
+    with:
+      issue-number: ${{ github.event.issue.number }}
+      config-path: ".github/project.yml"
+    secrets:
+      PROJECT_TOKEN: ${{ secrets.PROJECT_TOKEN }}

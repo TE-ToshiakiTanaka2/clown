@@ -1,0 +1,47 @@
+{
+  "name": "clown",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "clown",
+  "runServices": [
+    "clown"
+  ],
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash .devcontainer/scripts/post.sh",
+  "postStartCommand": "bash .devcontainer/scripts/refresh-assets.sh || true",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "installDirectlyFromGitHubRelease": true
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "eamodio.gitlens",
+        "mhutchie.git-graph"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.exclude": {
+          "**/.git": true,
+          "**/.DS_Store": true,
+          "**/Thumbs.db": true,
+          "**/*.swp": true,
+          "**/*.swo": true,
+          "**/*~": true,
+          "**/.hg": true,
+          "**/.svn": true
+        }
+      }
+    }
+  }
+}

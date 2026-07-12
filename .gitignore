@@ -1,0 +1,25 @@
+
+# Codex CLI (track shared config only)
+.codex/*
+!.codex/config.toml
+
+# Codex Agent Skills (track shared workflow skills)
+.agents/*
+!.agents/skills/
+!.agents/skills/**
+
+# Claude Code (track project configs only)
+.claude/*
+!.claude/commands/
+!.claude/skills/
+!.claude/scripts/
+!.claude/agents/
+!.claude/rules/
+!.claude/hooks/
+!.claude/settings.json
+
+# Serena MCP working files
+.serena/
+
+# Local screenshots (manual UI testing)
+screenshots/
