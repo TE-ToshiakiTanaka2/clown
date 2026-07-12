@@ -5,10 +5,10 @@ class_name Player
 
 signal died
 
-@export var speed: float = 120.0
-@export var acceleration: float = 800.0
-@export var friction: float = 800.0
-@export var jump_velocity: float = -300.0
+@export var speed: float = 150.0
+@export var acceleration: float = 1000.0
+@export var friction: float = 1000.0
+@export var jump_velocity: float = -380.0
 @export var jump_cut_factor: float = 0.5
 @export var bounce_velocity_factor: float = 0.7
 
