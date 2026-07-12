@@ -20,6 +20,8 @@ func _run() -> void:
 	await _test_turtle_state_rules()
 	await _test_new_enemy_state_rules()
 	await _test_projectile_bounds()
+	await _test_spiny_wall_recovery()
+	await _test_enemy_removal_safety()
 	await _test_physics_contact_resolution()
 	await _test_gimmick_behavior()
 	await _test_level_scene_contracts()
@@ -258,7 +260,7 @@ func _test_new_enemy_state_rules() -> void:
 	var spiny := spiny_scene.instantiate() as Spiny
 	spiny.position = Vector2(120.0, 0.0)
 	var cannon := cannon_scene.instantiate() as Cannon
-	cannon.position = Vector2(180.0, 0.0)
+	cannon.position = Vector2(1880.0, 0.0)
 	cannon.max_active_projectiles = 1
 	fixture.add_child(player)
 	fixture.add_child(bat)
@@ -296,19 +298,49 @@ func _test_new_enemy_state_rules() -> void:
 	_assert_false(spiny._defeated, "Spiny survives a top contact")
 	_assert_true(player.velocity.y < 0.0, "surviving Spiny stomp bounces player away")
 
-	player.position = Vector2.ZERO
+	player.position = Vector2(1700.0, 0.0)
 	cannon._process(0.0)
 	_assert_equal(cannon.state, Cannon.State.WARNING, "Cannon visibly warns before firing")
 	cannon._state_elapsed = cannon.warning_sec
 	cannon._process(0.0)
 	_assert_equal(cannon.state, Cannon.State.COOLDOWN, "Cannon enters cooldown after firing")
 	_assert_equal(cannon.active_projectile_count(), 1, "Cannon tracks its live projectile")
+	var live_projectile := cannon._active_projectiles[0]
+	_assert_equal(
+		live_projectile._origin,
+		cannon.muzzle.global_position,
+		"far-stage Cannon captures muzzle as projectile distance origin"
+	)
+	live_projectile._physics_process(0.1)
+	_assert_false(live_projectile.is_queued_for_deletion(), "far-stage shot survives its first movement tick")
 	cannon._enter_idle()
 	cannon._process(0.0)
 	_assert_equal(cannon.state, Cannon.State.IDLE, "projectile cap prevents another warning")
-	var live_projectile := cannon._active_projectiles[0]
 	live_projectile.expire()
 	_assert_equal(cannon.active_projectile_count(), 0, "expired shot immediately releases Cannon slot")
+
+	player.queue_free()
+	await get_tree().process_frame
+	bat._enter_patrol()
+	bat._physics_process(0.0)
+	spiny._enter_patrol()
+	spiny._physics_process(0.0)
+	cannon._enter_idle()
+	cannon._process(0.0)
+	_assert_equal(bat.state, SwoopBat.State.PATROL, "Bat tolerates a freed cached target")
+	_assert_equal(spiny.state, Spiny.State.PATROL, "Spiny tolerates a freed cached target")
+	_assert_equal(cannon.state, Cannon.State.IDLE, "Cannon tolerates a freed cached target")
+
+	bat.defeat_by_shell()
+	spiny.defeat_by_shell()
+	cannon.defeat_by_shell()
+	_assert_equal(bat.state, SwoopBat.State.DEFEATED, "shell defeats Bat")
+	_assert_equal(spiny.state, Spiny.State.DEFEATED, "shell defeats Spiny")
+	_assert_equal(cannon.state, Cannon.State.DEFEATED, "shell defeats Cannon")
+	bat.defeat_by_shell()
+	spiny.defeat_by_shell()
+	cannon.defeat_by_shell()
+	_assert_true(bat._defeated and spiny._defeated and cannon._defeated, "new shell defeats are idempotent")
 
 	fixture.queue_free()
 	await get_tree().process_frame
@@ -332,6 +364,108 @@ func _test_projectile_bounds() -> void:
 	_assert_equal(_projectile_expired_count, 1, "projectile emits expired exactly once")
 	_assert_true(projectile.is_queued_for_deletion(), "lifetime-bounded projectile queues removal")
 	await get_tree().process_frame
+
+	var wall_fixture := Node2D.new()
+	var wall := _make_test_wall(Vector2(28.0, 0.0), Vector2(8.0, 48.0))
+	var wall_shot := projectile_scene.instantiate() as EnemyProjectile
+	wall_shot.position = Vector2.ZERO
+	wall_fixture.add_child(wall)
+	wall_fixture.add_child(wall_shot)
+	get_tree().root.add_child(wall_fixture)
+	wall_shot.initialize(Vector2.RIGHT)
+	for _frame in 20:
+		await get_tree().physics_frame
+		if wall_shot.is_queued_for_deletion():
+			break
+	_assert_true(wall_shot.is_queued_for_deletion(), "projectile expires on physical world impact")
+	wall_fixture.queue_free()
+	await get_tree().process_frame
+
+	Game._level_ending = true
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var hit_fixture := Node2D.new()
+	var hit_player := player_scene.instantiate() as Player
+	hit_player.position = Vector2(32.0, 0.0)
+	hit_player.power_state = Player.PowerState.SUPER
+	var player_shot := projectile_scene.instantiate() as EnemyProjectile
+	player_shot.position = Vector2.ZERO
+	hit_fixture.add_child(hit_player)
+	hit_fixture.add_child(player_shot)
+	get_tree().root.add_child(hit_fixture)
+	hit_player.set_physics_process(false)
+	player_shot.initialize(Vector2.RIGHT)
+	for _frame in 20:
+		await get_tree().physics_frame
+		if player_shot.is_queued_for_deletion():
+			break
+	_assert_equal(hit_player.power_state, Player.PowerState.SMALL, "projectile physical impact damages Player")
+	_assert_true(player_shot.is_queued_for_deletion(), "projectile expires on Player impact")
+	hit_fixture.queue_free()
+	await get_tree().process_frame
+	Game._level_ending = false
+
+
+func _test_spiny_wall_recovery() -> void:
+	var spiny_scene := load("res://scenes/spiny.tscn") as PackedScene
+	var fixture := Node2D.new()
+	var wall := _make_test_wall(Vector2(36.0, 0.0), Vector2(8.0, 64.0))
+	var spiny := spiny_scene.instantiate() as Spiny
+	spiny.position = Vector2.ZERO
+	fixture.add_child(wall)
+	fixture.add_child(spiny)
+	get_tree().root.add_child(fixture)
+	spiny._gravity = 0.0
+	spiny.direction = 1
+	spiny._enter_charge()
+	for _frame in 30:
+		await get_tree().physics_frame
+		if spiny.state == Spiny.State.STUNNED:
+			break
+	_assert_equal(spiny.state, Spiny.State.STUNNED, "Spiny wall collision enters STUNNED")
+	spiny.set_physics_process(false)
+	spiny._state_elapsed = spiny.stunned_sec
+	spiny._physics_process(0.0)
+	_assert_equal(spiny.state, Spiny.State.PATROL, "Spiny recovers from STUNNED to PATROL")
+	fixture.queue_free()
+	await get_tree().process_frame
+
+
+func _test_enemy_removal_safety() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var cannon_scene := load("res://scenes/cannon.tscn") as PackedScene
+	var fixture := Node2D.new()
+	var player := player_scene.instantiate() as Player
+	player.position = Vector2(1700.0, 0.0)
+	var cannon := cannon_scene.instantiate() as Cannon
+	cannon.position = Vector2(1880.0, 0.0)
+	fixture.add_child(player)
+	fixture.add_child(cannon)
+	get_tree().root.add_child(fixture)
+	player.set_physics_process(false)
+	cannon.set_process(false)
+	await get_tree().process_frame
+	cannon._fire()
+	_assert_equal(cannon.active_projectile_count(), 1, "removal fixture Cannon creates one shot")
+	var orphaned_shot := cannon._active_projectiles[0]
+	cannon.queue_free()
+	await get_tree().process_frame
+	orphaned_shot.expire()
+	_assert_true(orphaned_shot.is_queued_for_deletion(), "shot expires safely after owner Cannon is freed")
+	fixture.queue_free()
+	await get_tree().process_frame
+
+
+func _make_test_wall(wall_position: Vector2, wall_size: Vector2) -> StaticBody2D:
+	var wall := StaticBody2D.new()
+	wall.position = wall_position
+	wall.collision_layer = 1
+	wall.collision_mask = 0
+	var shape_node := CollisionShape2D.new()
+	var rectangle := RectangleShape2D.new()
+	rectangle.size = wall_size
+	shape_node.shape = rectangle
+	wall.add_child(shape_node)
+	return wall
 
 
 func _test_physics_contact_resolution() -> void:
@@ -574,6 +708,11 @@ func _test_sprite_contracts() -> void:
 		_assert_sprite_contract(path, Vector2i(16, 16), true)
 	_assert_sprite_contract("res://assets/sprites/flag.png", Vector2i(16, 48), true)
 	_assert_sprite_contract("res://assets/sprites/tiles.png", Vector2i(128, 32), false)
+	_assert_sprite_frames_differ(
+		"res://assets/sprites/ember_0.png",
+		"res://assets/sprites/ember_1.png",
+		"projectile animation changes silhouette"
+	)
 
 	var animation_contracts := {
 		"res://scenes/player.tscn": ["run", 4],
@@ -608,6 +747,12 @@ func _assert_sprite_contract(path: String, size: Vector2i, transparent_corner: b
 	_assert_equal(image.get_size(), size, "%s keeps designed dimensions" % path)
 	if transparent_corner:
 		_assert_equal(image.get_pixel(0, 0).a, 0.0, "%s has transparent silhouette padding" % path)
+
+
+func _assert_sprite_frames_differ(first_path: String, second_path: String, label: String) -> void:
+	var first := (load(first_path) as Texture2D).get_image().get_data()
+	var second := (load(second_path) as Texture2D).get_image().get_data()
+	_assert_true(first != second, label)
 
 
 func _on_test_projectile_expired(_projectile: EnemyProjectile) -> void:

@@ -40,7 +40,7 @@ docs/design/             # Shared architecture snapshots and issue deltas
 
 ## Test Coverage
 
-- `game/tests/test_runner.gd`: 209 headless regression checks covering campaign progression, deterministic contact, enemy state machines, projectile bounds, stage distribution, gimmicks, and sprite contracts.
+- `game/tests/test_runner.gd`: 226 headless regression checks covering campaign progression, deterministic contact, enemy state machines, projectile bounds/impacts/removal safety, stage distribution, gimmicks, and sprite contracts.
 - Verification also includes a clean Godot import, headless main-scene smoke run, and deterministic sprite regeneration.
 
 ## Key Dependencies

@@ -414,8 +414,10 @@ def cannon_frame(state: str) -> Grid:
 
 def ember_frame(frame: int) -> Grid:
     g = canvas(12, 12)
-    tail = 1 if frame == 0 else 2
-    fill_polygon(g, [(1, 6), (4 + tail, 3), (4 + tail, 9)], EMBER)
+    if frame == 0:
+        fill_polygon(g, [(0, 6), (5, 3), (5, 9)], EMBER)
+    else:
+        fill_polygon(g, [(1, 3), (6, 4), (4, 6), (6, 8), (1, 9), (3, 6)], EMBER)
     fill_ellipse(g, 7, 6, 4, 4, EMBER)
     fill_ellipse(g, 8, 5, 2.5, 2.5, GOLD)
     fill_ellipse(g, 9, 5, 1.2, 1.2, EMBER_LIGHT)

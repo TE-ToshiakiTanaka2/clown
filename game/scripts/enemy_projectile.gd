@@ -20,6 +20,9 @@ func _ready() -> void:
 
 
 func initialize(new_direction: Vector2) -> void:
+	# Cannon positions the shot after add_child() has delivered _ready(). Capture
+	# the real muzzle location here so distance bounds are stage-local.
+	_origin = global_position
 	direction = new_direction.normalized()
 	if direction.is_zero_approx():
 		direction = Vector2.LEFT
