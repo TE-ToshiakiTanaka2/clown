@@ -15,6 +15,7 @@ func _run() -> void:
 	_test_registry_and_progression()
 	await _test_player_damage_rules()
 	_test_enemy_scene_contract()
+	await _test_physics_contact_resolution()
 	await _test_level_scene_contracts()
 
 	if _failures.is_empty():
@@ -41,6 +42,10 @@ func _test_registry_and_progression() -> void:
 	Game.current_level = 4
 	_assert_true(Game.is_final_level(), "stage 4 is final")
 	Game.current_level = original_level
+	_assert_equal(Game._unlocked_after_clear(1, 1), 2, "stage 1 unlocks only stage 2")
+	_assert_equal(Game._unlocked_after_clear(2, 2), 3, "stage 2 unlocks only stage 3")
+	_assert_equal(Game._unlocked_after_clear(3, 3), 4, "stage 3 unlocks only stage 4")
+	_assert_equal(Game._unlocked_after_clear(4, 4), 4, "stage 4 unlock stays clamped")
 
 
 func _test_player_damage_rules() -> void:
@@ -115,6 +120,70 @@ func _test_enemy_scene_contract() -> void:
 		_assert_false(enemy.has_node("StompArea"), "%s has no competing StompArea" % scene_path)
 		_assert_false(enemy.has_node("HitArea"), "%s has no competing HitArea" % scene_path)
 		enemy.free()
+
+
+func _test_physics_contact_resolution() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var goomba_scene := load("res://scenes/goomba.tscn") as PackedScene
+	var turtle_scene := load("res://scenes/turtle.tscn") as PackedScene
+	if player_scene == null or goomba_scene == null or turtle_scene == null:
+		_failures.append("physics contact fixtures load")
+		return
+
+	Game._level_ending = true
+	var side_fixture := Node2D.new()
+	var side_goomba := goomba_scene.instantiate()
+	var side_player := player_scene.instantiate() as Player
+	side_goomba.position = Vector2.ZERO
+	side_player.position = Vector2(20.0, 0.0)
+	side_player.power_state = Player.PowerState.SUPER
+	side_fixture.add_child(side_goomba)
+	side_fixture.add_child(side_player)
+	get_tree().root.add_child(side_fixture)
+	side_goomba.set_physics_process(false)
+	side_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_equal(side_player.power_state, Player.PowerState.SMALL, "physical side contact applies damage")
+	side_fixture.queue_free()
+	await get_tree().process_frame
+
+	var stomp_fixture := Node2D.new()
+	var stomp_goomba := goomba_scene.instantiate()
+	var stomp_player := player_scene.instantiate() as Player
+	stomp_goomba.position = Vector2.ZERO
+	stomp_player.position = Vector2(0.0, -25.0)
+	stomp_player.velocity.y = 100.0
+	stomp_fixture.add_child(stomp_goomba)
+	stomp_fixture.add_child(stomp_player)
+	get_tree().root.add_child(stomp_fixture)
+	stomp_goomba.set_physics_process(false)
+	stomp_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_true(stomp_goomba.get("_squashed"), "physical top contact squashes Goomba")
+	_assert_true(stomp_player.velocity.y < 0.0, "physical stomp bounces player")
+	stomp_fixture.queue_free()
+	await get_tree().process_frame
+
+	var turtle_fixture := Node2D.new()
+	var turtle := turtle_scene.instantiate() as Turtle
+	var turtle_player := player_scene.instantiate() as Player
+	turtle.position = Vector2.ZERO
+	turtle_player.position = Vector2(0.0, -25.0)
+	turtle_player.velocity.y = 100.0
+	turtle_fixture.add_child(turtle)
+	turtle_fixture.add_child(turtle_player)
+	get_tree().root.add_child(turtle_fixture)
+	turtle.set_physics_process(false)
+	turtle_player.set_physics_process(false)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_assert_equal(turtle.state, Turtle.State.SHELL, "physical top contact shells Turtle")
+	_assert_true(turtle_player.velocity.y < 0.0, "Turtle stomp bounces player")
+	turtle_fixture.queue_free()
+	await get_tree().process_frame
+	Game._level_ending = false
 
 
 func _test_level_scene_contracts() -> void:

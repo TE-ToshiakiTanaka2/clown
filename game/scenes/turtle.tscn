@@ -9,7 +9,7 @@
 size = Vector2(22, 22)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_contact"]
-size = Vector2(22, 18)
+size = Vector2(24, 24)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hit"]
 size = Vector2(22, 18)

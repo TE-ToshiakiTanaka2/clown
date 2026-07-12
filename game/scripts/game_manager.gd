@@ -87,9 +87,15 @@ func clear_level() -> void:
 		return
 	_level_ending = true
 	level_cleared.emit()
-	unlocked_level = clampi(maxi(unlocked_level, current_level + 1), 1, max_level())
+	unlocked_level = _unlocked_after_clear(current_level, unlocked_level)
 	_save_progress()
 	_delayed_transition(LEVEL_CLEAR_DELAY_SEC, go_to_stage_select)
+
+
+func _unlocked_after_clear(level_number: int, highest_unlocked: int) -> int:
+	## Pure progression rule kept separate from persistence/scene transitions so
+	## save compatibility and final-stage clamping can be regression-tested.
+	return clampi(maxi(highest_unlocked, level_number + 1), 1, max_level())
 
 
 func start_level(n: int) -> void:

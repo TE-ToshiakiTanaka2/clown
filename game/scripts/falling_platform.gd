@@ -61,4 +61,10 @@ func _on_reset_timer_timeout() -> void:
 	# Toggle monitoring so a player standing on the reset platform can trigger
 	# a fresh body-enter event on the next physics step.
 	trigger_area.set_deferred("monitoring", false)
-	trigger_area.set_deferred("monitoring", true)
+	_rearm_trigger.call_deferred()
+
+
+func _rearm_trigger() -> void:
+	await get_tree().physics_frame
+	if is_instance_valid(trigger_area):
+		trigger_area.monitoring = true
