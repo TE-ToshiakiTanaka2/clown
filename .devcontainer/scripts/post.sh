@@ -281,3 +281,11 @@ if [[ -f "${SCRIPT_DIR}/setup_codex.sh" ]]; then
     source "${SCRIPT_DIR}/setup_codex.sh"
     setup_codex
 fi
+
+# -----------------------------------------------------------------------------
+# Godot + godot-mcp Setup (#1)
+# -----------------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "${SCRIPT_DIR}/setup-godot.sh" ]]; then
+    "${SCRIPT_DIR}/setup-godot.sh"
+fi
