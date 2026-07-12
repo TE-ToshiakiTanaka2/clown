@@ -1,4 +1,5 @@
 extends CharacterBody2D
+class_name Player
 ## Player controller: run/jump with acceleration, variable jump height,
 ## coyote time, and jump buffering.
 

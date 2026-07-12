@@ -1,0 +1,48 @@
+[gd_scene load_steps=6 format=3 uid="uid://bqgoomba0001"]
+
+[ext_resource type="Script" path="res://scripts/goomba.gd" id="1_goomba"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_goomba"]
+size = Vector2(24, 24)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(22, 22)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_stomp"]
+size = Vector2(24, 8)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hit"]
+size = Vector2(22, 18)
+
+[node name="Goomba" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 3
+script = ExtResource("1_goomba")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(0.55, 0.32, 0.1, 1)
+texture = SubResource("PlaceholderTexture2D_goomba")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="FloorRay" type="RayCast2D" parent="."]
+position = Vector2(-12, 8)
+target_position = Vector2(0, 12)
+collision_mask = 1
+
+[node name="StompArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+position = Vector2(0, -12)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StompArea"]
+shape = SubResource("RectangleShape2D_stomp")
+
+[node name="HitArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+position = Vector2(0, 3)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HitArea"]
+shape = SubResource("RectangleShape2D_hit")
