@@ -51,6 +51,11 @@ func add_score(points: int) -> void:
 	score_changed.emit(score)
 
 
+func add_life() -> void:
+	lives += 1
+	lives_changed.emit(lives)
+
+
 func player_died() -> void:
 	if _level_ending:
 		return
