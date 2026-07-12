@@ -32,4 +32,7 @@ func _on_game_over() -> void:
 
 
 func _on_level_cleared() -> void:
-	message_label.text = "COURSE CLEAR!"
+	if Game.is_final_level():
+		message_label.text = "ALL CLEAR! THANKS FOR PLAYING"
+	else:
+		message_label.text = "COURSE CLEAR!"
