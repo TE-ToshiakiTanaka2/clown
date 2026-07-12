@@ -11,6 +11,7 @@ signal died
 ## Only the sprite changes between the two -- the collision shape stays the
 ## same size in both states (see docs/design/#7/design.md).
 enum PowerState { SMALL, SUPER }
+enum ContactOutcome { IGNORE, STOMP, DAMAGE }
 
 const INVINCIBILITY_SEC: float = 1.5
 const INVINCIBILITY_BLINK_SEC: float = 0.1
@@ -46,6 +47,25 @@ func _ready() -> void:
 func feet_global_y() -> float:
 	## Global y of the player's bottom edge; used by enemies for stomp checks.
 	return global_position.y + _half_height
+
+
+func classify_enemy_contact(enemy_center_y: float) -> ContactOutcome:
+	## A single classification point keeps overlapping physics callbacks from
+	## producing contradictory stomp and damage outcomes. Dead and temporarily
+	## invincible players never affect or take damage from an enemy contact.
+	if _is_dead or _invincible:
+		return ContactOutcome.IGNORE
+	if velocity.y > 0.0 and feet_global_y() <= enemy_center_y:
+		return ContactOutcome.STOMP
+	return ContactOutcome.DAMAGE
+
+
+func is_dead() -> bool:
+	return _is_dead
+
+
+func is_invincible() -> bool:
+	return _invincible
 
 
 func _on_level_cleared() -> void:
@@ -100,7 +120,18 @@ func _do_jump() -> void:
 
 
 func bounce() -> void:
+	if _is_dead:
+		return
 	velocity.y = jump_velocity * bounce_velocity_factor
+
+
+func launch(vertical_velocity: float) -> void:
+	## Stage springs use the same guarded vertical-impulse entry point.
+	if _is_dead:
+		return
+	velocity.y = vertical_velocity
+	coyote_timer.stop()
+	jump_buffer_timer.stop()
 
 
 func power_up() -> void:
@@ -111,27 +142,29 @@ func power_up() -> void:
 	power_state = PowerState.SUPER
 
 
-func take_damage() -> void:
+func take_damage() -> bool:
 	## Shared damage entrypoint: enemies/hazards call this instead of die()
 	## directly. SUPER loses its power-up and gets a brief invincibility
 	## window (with a blinking sprite); SMALL dies outright.
 	if _is_dead or _invincible:
-		return
+		return false
 	if power_state == PowerState.SUPER:
 		power_state = PowerState.SMALL
 		_start_invincibility()
 	else:
 		die()
+	return true
 
 
-func die() -> void:
+func die() -> bool:
 	if _is_dead:
-		return
+		return false
 	_is_dead = true
 	set_physics_process(false)
 	sprite.play("death")
 	died.emit()
 	Game.player_died()
+	return true
 
 
 func _start_invincibility() -> void:

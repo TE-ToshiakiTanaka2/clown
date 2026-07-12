@@ -14,8 +14,7 @@ const SHELL_DEFEAT_SCORE: int = 200
 @export var shell_revert_sec: float = 5.0
 
 @onready var floor_ray: RayCast2D = $FloorRay
-@onready var stomp_area: Area2D = $StompArea
-@onready var hit_area: Area2D = $HitArea
+@onready var contact_area: Area2D = $ContactArea
 @onready var enemy_hit_area: Area2D = $EnemyHitArea
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var shell_timer: Timer = $ShellTimer
@@ -29,8 +28,7 @@ var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 func _ready() -> void:
 	add_to_group("enemies")
 	shell_timer.wait_time = shell_revert_sec
-	stomp_area.body_entered.connect(_on_stomp_area_body_entered)
-	hit_area.body_entered.connect(_on_hit_area_body_entered)
+	contact_area.body_entered.connect(_on_contact_area_body_entered)
 	enemy_hit_area.body_entered.connect(_on_enemy_hit_area_body_entered)
 	shell_timer.timeout.connect(_on_shell_timer_timeout)
 	floor_ray.position.x = abs(floor_ray.position.x) * direction
@@ -63,33 +61,25 @@ func _reverse_direction() -> void:
 	sprite.flip_h = direction > 0
 
 
-func _is_stomp(body: Node) -> bool:
-	return body is Player and body.velocity.y > 0.0 and body.feet_global_y() < global_position.y
-
-
-func _on_stomp_area_body_entered(body: Node) -> void:
-	if not _is_stomp(body):
+func _on_contact_area_body_entered(body: Node) -> void:
+	if not body is Player:
 		return
-	match state:
-		State.WALK:
-			_enter_shell()
-		State.SHELL:
-			_enter_sliding(body)
-		State.SLIDING:
-			_enter_shell()
-	body.bounce()
-
-
-func _on_hit_area_body_entered(body: Node) -> void:
-	if not (body is Player) or _is_stomp(body):
-		return
-	match state:
-		State.WALK:
-			body.take_damage()
-		State.SHELL:
-			_enter_sliding(body)
-		State.SLIDING:
-			body.take_damage()
+	match body.classify_enemy_contact(global_position.y):
+		Player.ContactOutcome.STOMP:
+			match state:
+				State.WALK:
+					_enter_shell()
+				State.SHELL:
+					_enter_sliding(body)
+				State.SLIDING:
+					_enter_shell()
+			body.bounce()
+		Player.ContactOutcome.DAMAGE:
+			match state:
+				State.WALK, State.SLIDING:
+					body.take_damage()
+				State.SHELL:
+					_enter_sliding(body)
 
 
 func _on_enemy_hit_area_body_entered(body: Node) -> void:
@@ -132,8 +122,7 @@ func defeat_by_shell() -> void:
 	sprite.flip_v = true
 	set_physics_process(false)
 	$CollisionShape2D.set_deferred("disabled", true)
-	stomp_area.set_deferred("monitoring", false)
-	hit_area.set_deferred("monitoring", false)
+	contact_area.set_deferred("monitoring", false)
 	enemy_hit_area.set_deferred("monitoring", false)
 	get_tree().create_timer(0.4).timeout.connect(queue_free)
 
