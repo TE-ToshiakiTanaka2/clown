@@ -1,9 +1,19 @@
 extends CharacterBody2D
 class_name Player
 ## Player controller: run/jump with acceleration, variable jump height,
-## coyote time, and jump buffering.
+## coyote time, and jump buffering. Also owns the shared damage API
+## (take_damage/power_up) that enemies and pickups call into -- see #7.
 
 signal died
+
+## SMALL is the default, one-hit-death state; SUPER survives one hit by
+## dropping back to SMALL with a brief invincibility window instead of dying.
+## Only the sprite changes between the two -- the collision shape stays the
+## same size in both states (see docs/design/#7/design.md).
+enum PowerState { SMALL, SUPER }
+
+const INVINCIBILITY_SEC: float = 1.5
+const INVINCIBILITY_BLINK_SEC: float = 0.1
 
 @export var speed: float = 150.0
 @export var acceleration: float = 1000.0
@@ -14,15 +24,20 @@ signal died
 
 @onready var coyote_timer: Timer = $CoyoteTimer
 @onready var jump_buffer_timer: Timer = $JumpBufferTimer
+@onready var invincibility_timer: Timer = $InvincibilityTimer
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
+var power_state: PowerState = PowerState.SMALL
 var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 var _is_dead: bool = false
 var _half_height: float = 0.0
+var _invincible: bool = false
 
 
 func _ready() -> void:
 	Game.level_cleared.connect(_on_level_cleared)
+	invincibility_timer.wait_time = INVINCIBILITY_SEC
+	invincibility_timer.timeout.connect(_on_invincibility_timeout)
 	var collision_shape: CollisionShape2D = $CollisionShape2D
 	var rect := collision_shape.shape as RectangleShape2D
 	_half_height = collision_shape.position.y + rect.size.y / 2.0
@@ -69,12 +84,13 @@ func _physics_process(delta: float) -> void:
 func _update_animation() -> void:
 	if velocity.x != 0.0:
 		sprite.flip_h = velocity.x < 0.0
+	var prefix: String = "super_" if power_state == PowerState.SUPER else ""
 	if not is_on_floor():
-		sprite.play("jump")
+		sprite.play(prefix + "jump")
 	elif absf(velocity.x) > 1.0:
-		sprite.play("run")
+		sprite.play(prefix + "run")
 	else:
-		sprite.play("idle")
+		sprite.play(prefix + "idle")
 
 
 func _do_jump() -> void:
@@ -87,6 +103,27 @@ func bounce() -> void:
 	velocity.y = jump_velocity * bounce_velocity_factor
 
 
+func power_up() -> void:
+	## SMALL -> SUPER. Picking up a second mushroom while already SUPER is a
+	## no-op here -- the mushroom itself still awards its score either way.
+	if power_state == PowerState.SUPER:
+		return
+	power_state = PowerState.SUPER
+
+
+func take_damage() -> void:
+	## Shared damage entrypoint: enemies/hazards call this instead of die()
+	## directly. SUPER loses its power-up and gets a brief invincibility
+	## window (with a blinking sprite); SMALL dies outright.
+	if _is_dead or _invincible:
+		return
+	if power_state == PowerState.SUPER:
+		power_state = PowerState.SMALL
+		_start_invincibility()
+	else:
+		die()
+
+
 func die() -> void:
 	if _is_dead:
 		return
@@ -95,3 +132,24 @@ func die() -> void:
 	sprite.play("death")
 	died.emit()
 	Game.player_died()
+
+
+func _start_invincibility() -> void:
+	_invincible = true
+	invincibility_timer.start()
+	_blink()
+
+
+func _blink() -> void:
+	if not _invincible:
+		sprite.modulate.a = 1.0
+		return
+	var tween := create_tween()
+	tween.tween_property(sprite, "modulate:a", 0.2, INVINCIBILITY_BLINK_SEC)
+	tween.tween_property(sprite, "modulate:a", 1.0, INVINCIBILITY_BLINK_SEC)
+	tween.tween_callback(_blink)
+
+
+func _on_invincibility_timeout() -> void:
+	_invincible = false
+	sprite.modulate.a = 1.0

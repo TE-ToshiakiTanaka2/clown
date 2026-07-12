@@ -247,6 +247,65 @@ def build_player_sprites() -> Dict[str, Grid]:
 
 
 # ---------------------------------------------------------------------------
+# Super player (16x24, issue #7): SMALL -> SUPER power-up variant. Visual
+# only (the collision shape never changes -- see docs/design/#7/design.md).
+# Derived from the SMALL torso/legs: shoulders/torso widened to the edges of
+# the 16px canvas (broader silhouette) and the blank last leg row filled in
+# (no dead space at the bottom), so it reads as bulkier/taller at a glance
+# despite sharing the exact same 16x24 canvas as the SMALL frames.
+# ---------------------------------------------------------------------------
+
+SUPER_TORSO: List[str] = PLAYER_TORSO[0:3] + ["R" * 16] + PLAYER_TORSO[4:9] + [
+    "B" * 16,                       # 9 shoulders (full width)
+    "R" * 2 + "B" * 12 + "R" * 2,   # 10 sleeve cuffs (full width)
+    "R" * 2 + "B" * 12 + "R" * 2,   # 11 sleeve cuffs
+    "B" * 16,                       # 12 torso
+    "W" + "B" * 14 + "W",           # 13 gloves at side
+    "B" * 16,                       # 14 torso
+    "B" * 16,                       # 15 waist
+    "B" * 16,                       # 16 waist
+    "." + "B" * 14 + ".",           # 17 hips (widened from the SMALL 3px margin)
+]
+
+
+def _fill_last_row(legs: Sequence[str]) -> List[str]:
+    """Replace the trailing blank leg row with a copy of the row above it,
+    so SUPER poses use the full 24px canvas instead of leaving dead space."""
+    return list(legs[:-1]) + [legs[-2]]
+
+
+SUPER_LEGS_IDLE = _fill_last_row(PLAYER_LEGS_IDLE)
+SUPER_LEGS_RUN_MID = _fill_last_row(PLAYER_LEGS_RUN_MID)
+SUPER_LEGS_RUN_STRIDE = _fill_last_row(PLAYER_LEGS_RUN_STRIDE)
+SUPER_LEGS_JUMP = _fill_last_row(PLAYER_LEGS_JUMP)
+
+
+def _super_player_frame(name: str, legs: Sequence[str]) -> Grid:
+    rows = list(SUPER_TORSO) + list(legs)
+    return rows_to_grid(name, rows, PLAYER_LEGEND)
+
+
+def build_super_player_sprites() -> Dict[str, Grid]:
+    idle = _super_player_frame("super_idle", SUPER_LEGS_IDLE)
+    run_0 = _super_player_frame("super_run_0", SUPER_LEGS_RUN_STRIDE)
+    run_1 = _super_player_frame("super_run_1", SUPER_LEGS_RUN_MID)
+    run_2 = rows_to_grid(
+        "super_run_2",
+        list(SUPER_TORSO) + mirror_rows(SUPER_LEGS_RUN_STRIDE),
+        PLAYER_LEGEND,
+    )
+    jump = _super_player_frame("super_jump", SUPER_LEGS_JUMP)
+
+    return {
+        "super_idle": idle,
+        "super_run_0": run_0,
+        "super_run_1": run_1,
+        "super_run_2": run_2,
+        "super_jump": jump,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Goomba (16x16): brown walking-mushroom enemy.
 # ---------------------------------------------------------------------------
 
@@ -713,6 +772,7 @@ def build_tile_atlas() -> Grid:
 def main() -> None:
     sprites: Dict[str, Grid] = {}
     sprites.update(build_player_sprites())
+    sprites.update(build_super_player_sprites())
     sprites.update(build_goomba_sprites())
     sprites.update(build_turtle_sprites())
     sprites.update(build_coin_sprites())

@@ -16,6 +16,7 @@ var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 
 func _ready() -> void:
+	add_to_group("enemies")
 	stomp_area.body_entered.connect(_on_stomp_area_body_entered)
 	hit_area.body_entered.connect(_on_hit_area_body_entered)
 	squash_timer.timeout.connect(_on_squash_timer_timeout)
@@ -59,15 +60,28 @@ func _on_hit_area_body_entered(body: Node) -> void:
 	if _squashed:
 		return
 	if body is Player and not _is_stomp(body):
-		body.die()
+		body.take_damage()
 
 
 func squash(player: Player) -> void:
 	if _squashed:
 		return
-	_squashed = true
-	Game.add_score(200)
 	player.bounce()
+	_die(200)
+
+
+func defeat_by_shell() -> void:
+	## Duck-typed defeat entrypoint called by a sliding turtle shell (see
+	## turtle.gd) -- any "enemies" group member exposing this method can be
+	## chained-defeated by a shell, no direct goomba/turtle coupling needed.
+	if _squashed:
+		return
+	_die(100)
+
+
+func _die(score: int) -> void:
+	_squashed = true
+	Game.add_score(score)
 	stomp_area.set_deferred("monitoring", false)
 	hit_area.set_deferred("monitoring", false)
 	set_collision_layer_value(3, false)
