@@ -48,5 +48,5 @@ Area は必要な body layer のみを mask し、自身の layer は原則0と�
 ## ツールチェーン
 
 - Godot 4.7 stable。初回は `godot --headless --path game --import`。
-- 実行検証はプロジェクト本体、各レベル直接ロード、`game/tests/test_runner.gd`。
+- 実行検証はプロジェクト本体、各レベル直接ロード、`game/tests/test_runner.tscn`。
 - `SCRIPT ERROR`、parse error、resource load error は失敗として扱う。

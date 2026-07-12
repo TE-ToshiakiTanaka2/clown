@@ -36,7 +36,7 @@
 ### Step 5: Add automated verification
 
 - **Action**: Add a headless runner for rules, progression, and scene contracts.
-- **Files**: `game/tests/test_runner.gd`.
+- **Files**: `game/tests/test_runner.gd`, `game/tests/test_runner.tscn`.
 - **Depends on**: Steps 1–4.
 - **Done when**: Tests exit 0 and assertion failures exit nonzero.
 

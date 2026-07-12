@@ -49,7 +49,8 @@ game/
 │   ├── spring.gd
 │   └── damage_hazard.gd
 └── tests/
-    └── test_runner.gd
+    ├── test_runner.gd
+    └── test_runner.tscn
 ```
 
 ## Interface Design (delta)
