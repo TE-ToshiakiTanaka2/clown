@@ -43,7 +43,12 @@ func _ready() -> void:
 
 
 func max_level() -> int:
-	return LEVELS.size()
+	## Highest registered level number (not the registry size, so a gap in
+	## the numbering can never break final-level detection or unlock clamping).
+	var highest: int = 0
+	for level_number in LEVELS:
+		highest = maxi(highest, level_number)
+	return highest
 
 
 func is_final_level() -> bool:
