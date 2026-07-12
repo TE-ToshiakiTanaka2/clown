@@ -17,12 +17,12 @@ const LEVEL_CLEAR_DELAY_SEC: float = 2.5
 const TITLE_SCENE: String = "res://scenes/title_screen.tscn"
 const STAGE_SELECT_SCENE: String = "res://scenes/stage_select.tscn"
 
-## Level registry: level number -> scene path. Only level 1 exists as of
-## issue #6; level 2 is added in #8. `unlocked_level` is clamped against
-## this registry, so stage 2 stays LOCKED in stage select until it is
-## both unlocked *and* registered here.
+## Level registry: level number -> scene path. `unlocked_level` is clamped
+## against this registry, so a level stays LOCKED in stage select until it
+## is both unlocked *and* registered here.
 const LEVELS: Dictionary[int, String] = {
 	1: "res://scenes/level_1.tscn",
+	2: "res://scenes/level_2.tscn",
 }
 
 var score: int = 0
@@ -43,7 +43,18 @@ func _ready() -> void:
 
 
 func max_level() -> int:
-	return LEVELS.size()
+	## Highest registered level number (not the registry size, so a gap in
+	## the numbering can never break final-level detection or unlock clamping).
+	var highest: int = 0
+	for level_number in LEVELS:
+		highest = maxi(highest, level_number)
+	return highest
+
+
+func is_final_level() -> bool:
+	## True while playing (or just having cleared) the last registered level.
+	## Used by the HUD to swap "COURSE CLEAR!" for a whole-game clear message.
+	return current_level == max_level()
 
 
 func add_score(points: int) -> void:
