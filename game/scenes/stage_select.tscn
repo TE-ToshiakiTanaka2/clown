@@ -185,14 +185,14 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = -112.0
+offset_top = -138.0
 offset_right = -24.0
 offset_bottom = -48.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.92, 0.92, 0.75, 1)
-theme_override_font_sizes/font_size = 12
-text = "RULES  STOMP from above • SIDE HIT: SMALL loses 1 life\nSUPER shrinks + 1.5s guard • 0 LIVES = GAME OVER\nSPIKES damage • LAVA / FALL = instant miss\n← → SELECT   SPACE / ENTER START   ESC TITLE"
+theme_override_font_sizes/font_size = 11
+text = "RULES  STOMP from above • SIDE HIT: SMALL loses 1 life\nBAT SWOOPS • SPINY: DO NOT STOMP • CANNON SHOTS HURT\nSUPER shrinks + 1.5s guard • 0 LIVES = GAME OVER\nSPIKES damage • LAVA / FALL = instant miss\n← → SELECT   SPACE / ENTER START   ESC TITLE"
 horizontal_alignment = 1
 vertical_alignment = 1
 

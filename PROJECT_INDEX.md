@@ -24,7 +24,10 @@ docs/design/             # Shared architecture snapshots and issue deltas
 ## Core Modules
 
 - `game/scripts/player.gd`: movement, SMALL/SUPER state, damage, death, and bounce.
-- `game/scripts/goomba.gd`, `turtle.gd`: patrol and stomp/shell enemy behavior.
+- `game/scripts/goomba.gd`, `turtle.gd`: baseline patrol and stomp/shell enemy behavior.
+- `game/scripts/swoop_bat.gd`: bounded flying patrol, targeted dive, and home-return AI.
+- `game/scripts/spiny.gd`: armored patrol, telegraphed charge, stun, and shell-only defeat AI.
+- `game/scripts/cannon.gd`, `enemy_projectile.gd`: telegraphed ranged AI with bounded live shots and projectile lifetime/distance limits.
 - `game/scripts/game_manager.gd`: registry, run state, unlock persistence, and terminal-outcome guards.
 - `game/scripts/stage_select.gd`, `hud.gd`: progression UI and status presentation.
 - `question_block.gd`, `mushroom.gd`, `coin.gd`: pickups and rewards.
@@ -37,8 +40,8 @@ docs/design/             # Shared architecture snapshots and issue deltas
 
 ## Test Coverage
 
-- No automated game tests existed before Issue #14.
-- Existing verification is Godot import and headless project/scene loading.
+- `game/tests/test_runner.gd`: 209 headless regression checks covering campaign progression, deterministic contact, enemy state machines, projectile bounds, stage distribution, gimmicks, and sprite contracts.
+- Verification also includes a clean Godot import, headless main-scene smoke run, and deterministic sprite regeneration.
 
 ## Key Dependencies
 

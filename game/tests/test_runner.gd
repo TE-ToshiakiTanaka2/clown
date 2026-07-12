@@ -4,6 +4,7 @@ extends Node
 
 var _checks: int = 0
 var _failures: Array[String] = []
+var _projectile_expired_count: int = 0
 
 
 func _ready() -> void:
@@ -17,9 +18,12 @@ func _run() -> void:
 	await _test_player_damage_rules()
 	_test_enemy_scene_contract()
 	await _test_turtle_state_rules()
+	await _test_new_enemy_state_rules()
+	await _test_projectile_bounds()
 	await _test_physics_contact_resolution()
 	await _test_gimmick_behavior()
 	await _test_level_scene_contracts()
+	_test_sprite_contracts()
 
 	if _failures.is_empty():
 		print("TEST_PASS: %d checks" % _checks)
@@ -177,7 +181,13 @@ func _test_player_damage_rules() -> void:
 
 
 func _test_enemy_scene_contract() -> void:
-	for scene_path in ["res://scenes/goomba.tscn", "res://scenes/turtle.tscn"]:
+	for scene_path in [
+		"res://scenes/goomba.tscn",
+		"res://scenes/turtle.tscn",
+		"res://scenes/swoop_bat.tscn",
+		"res://scenes/spiny.tscn",
+		"res://scenes/cannon.tscn",
+	]:
 		var packed := load(scene_path) as PackedScene
 		_assert_not_null(packed, "%s loads" % scene_path)
 		if packed == null:
@@ -187,6 +197,7 @@ func _test_enemy_scene_contract() -> void:
 		_assert_false(enemy.has_node("StompArea"), "%s has no competing StompArea" % scene_path)
 		_assert_false(enemy.has_node("HitArea"), "%s has no competing HitArea" % scene_path)
 		enemy.free()
+	_assert_true(ResourceLoader.exists("res://scenes/enemy_projectile.tscn"), "projectile scene exists")
 
 
 func _test_turtle_state_rules() -> void:
@@ -226,6 +237,101 @@ func _test_turtle_state_rules() -> void:
 	fixture.queue_free()
 	await get_tree().process_frame
 	Game._level_ending = false
+
+
+func _test_new_enemy_state_rules() -> void:
+	var player_scene := load("res://scenes/player.tscn") as PackedScene
+	var bat_scene := load("res://scenes/swoop_bat.tscn") as PackedScene
+	var spiny_scene := load("res://scenes/spiny.tscn") as PackedScene
+	var cannon_scene := load("res://scenes/cannon.tscn") as PackedScene
+	if null in [player_scene, bat_scene, spiny_scene, cannon_scene]:
+		_failures.append("new enemy state fixtures load")
+		return
+
+	Game._level_ending = true
+	var fixture := Node2D.new()
+	var player := player_scene.instantiate() as Player
+	player.position = Vector2.ZERO
+	player.power_state = Player.PowerState.SUPER
+	var bat := bat_scene.instantiate() as SwoopBat
+	bat.position = Vector2(80.0, -40.0)
+	var spiny := spiny_scene.instantiate() as Spiny
+	spiny.position = Vector2(120.0, 0.0)
+	var cannon := cannon_scene.instantiate() as Cannon
+	cannon.position = Vector2(180.0, 0.0)
+	cannon.max_active_projectiles = 1
+	fixture.add_child(player)
+	fixture.add_child(bat)
+	fixture.add_child(spiny)
+	fixture.add_child(cannon)
+	get_tree().root.add_child(fixture)
+	player.set_physics_process(false)
+	bat.set_physics_process(false)
+	spiny.set_physics_process(false)
+	cannon.set_process(false)
+	await get_tree().process_frame
+	_assert_true(player.is_in_group("player"), "player registers one cached-target group")
+
+	bat._start_dive()
+	_assert_equal(bat.state, SwoopBat.State.DIVE, "Bat enters DIVE inside detection range")
+	bat._state_elapsed = bat.dive_duration
+	bat._physics_process(0.0)
+	_assert_equal(bat.state, SwoopBat.State.RETURN, "Bat dive is duration bounded")
+	bat.global_position = bat._home
+	bat._physics_process(0.0)
+	_assert_equal(bat.state, SwoopBat.State.PATROL, "Bat returns to PATROL at home")
+
+	spiny._enter_windup()
+	_assert_equal(spiny.state, Spiny.State.WINDUP, "Spiny telegraphs before charge")
+	spiny._state_elapsed = spiny.windup_sec
+	spiny._physics_process(0.0)
+	_assert_equal(spiny.state, Spiny.State.CHARGE, "Spiny enters timed CHARGE")
+	spiny._state_elapsed = spiny.charge_sec
+	spiny._physics_process(0.0)
+	_assert_equal(spiny.state, Spiny.State.PATROL, "Spiny charge returns to PATROL")
+	player.position = Vector2(120.0, -25.0)
+	player.velocity.y = 100.0
+	spiny._on_contact_area_body_entered(player)
+	_assert_equal(player.power_state, Player.PowerState.SMALL, "Spiny stomp damages instead of defeating")
+	_assert_false(spiny._defeated, "Spiny survives a top contact")
+	_assert_true(player.velocity.y < 0.0, "surviving Spiny stomp bounces player away")
+
+	player.position = Vector2.ZERO
+	cannon._process(0.0)
+	_assert_equal(cannon.state, Cannon.State.WARNING, "Cannon visibly warns before firing")
+	cannon._state_elapsed = cannon.warning_sec
+	cannon._process(0.0)
+	_assert_equal(cannon.state, Cannon.State.COOLDOWN, "Cannon enters cooldown after firing")
+	_assert_equal(cannon.active_projectile_count(), 1, "Cannon tracks its live projectile")
+	cannon._enter_idle()
+	cannon._process(0.0)
+	_assert_equal(cannon.state, Cannon.State.IDLE, "projectile cap prevents another warning")
+	var live_projectile := cannon._active_projectiles[0]
+	live_projectile.expire()
+	_assert_equal(cannon.active_projectile_count(), 0, "expired shot immediately releases Cannon slot")
+
+	fixture.queue_free()
+	await get_tree().process_frame
+	Game._level_ending = false
+
+
+func _test_projectile_bounds() -> void:
+	var projectile_scene := load("res://scenes/enemy_projectile.tscn") as PackedScene
+	if projectile_scene == null:
+		_failures.append("projectile bound fixture loads")
+		return
+	var projectile := projectile_scene.instantiate() as EnemyProjectile
+	projectile.lifetime_sec = 0.05
+	projectile.initialize(Vector2.ZERO)
+	get_tree().root.add_child(projectile)
+	_assert_equal(projectile.direction, Vector2.LEFT, "zero projectile direction has safe fallback")
+	_projectile_expired_count = 0
+	projectile.expired.connect(_on_test_projectile_expired)
+	projectile._physics_process(0.06)
+	projectile.expire()
+	_assert_equal(_projectile_expired_count, 1, "projectile emits expired exactly once")
+	_assert_true(projectile.is_queued_for_deletion(), "lifetime-bounded projectile queues removal")
+	await get_tree().process_frame
 
 
 func _test_physics_contact_resolution() -> void:
@@ -418,18 +524,94 @@ func _test_level_scene_contracts() -> void:
 		await get_tree().process_frame
 		for required_path in ["Player", "Player/Camera2D", "Flag", "KillZone", "HUD"]:
 			_assert_true(level.has_node(required_path), "stage %d has %s" % [level_number, required_path])
+		if level_number == 1:
+			_assert_equal(get_tree().get_nodes_in_group("swoop_bats").size(), 0, "stage 1 keeps baseline enemies")
+			_assert_equal(get_tree().get_nodes_in_group("spinies").size(), 0, "stage 1 has no stomp exception")
+			_assert_equal(get_tree().get_nodes_in_group("cannons").size(), 0, "stage 1 has no projectiles")
+		if level_number == 2:
+			_assert_group_count_at_least("swoop_bats", 2, "stage 2 introduces Bats")
+			_assert_group_count_at_least("spinies", 1, "stage 2 introduces one Spiny")
 		if level_number == 3:
 			_assert_group_count_at_least("moving_platforms", 3, "stage 3 moving platforms")
 			_assert_group_count_at_least("falling_platforms", 5, "stage 3 falling platforms")
 			_assert_group_count_at_least("springs", 2, "stage 3 springs")
+			_assert_group_count_at_least("swoop_bats", 3, "stage 3 Bat pressure")
+			_assert_group_count_at_least("spinies", 2, "stage 3 Spiny islands")
 		if level_number == 4:
 			_assert_group_count_at_least("moving_platforms", 5, "stage 4 moving platforms")
 			_assert_group_count_at_least("falling_platforms", 3, "stage 4 falling platforms")
 			_assert_group_count_at_least("springs", 1, "stage 4 spring")
 			_assert_group_count_at_least("spike_hazards", 4, "stage 4 spike hazards")
 			_assert_group_count_at_least("instant_hazards", 3, "stage 4 lava hazards")
+			_assert_group_count_at_least("swoop_bats", 1, "stage 4 mixed Bat")
+			_assert_group_count_at_least("spinies", 3, "stage 4 Spiny pressure")
+			_assert_group_count_at_least("cannons", 3, "stage 4 Cannon battery")
 		level.queue_free()
 		await get_tree().process_frame
+
+
+func _test_sprite_contracts() -> void:
+	for path in [
+		"res://assets/sprites/player_idle.png",
+		"res://assets/sprites/player_run_0.png",
+		"res://assets/sprites/goomba_walk_0.png",
+		"res://assets/sprites/turtle_walk_0.png",
+		"res://assets/sprites/bat_fly_0.png",
+		"res://assets/sprites/spiny_walk_0.png",
+		"res://assets/sprites/cannon_idle.png",
+	]:
+		_assert_sprite_contract(path, Vector2i(24, 24), true)
+	for path in [
+		"res://assets/sprites/super_idle.png",
+		"res://assets/sprites/super_run_0.png",
+	]:
+		_assert_sprite_contract(path, Vector2i(24, 32), true)
+	for path in [
+		"res://assets/sprites/coin_0.png",
+		"res://assets/sprites/mushroom.png",
+		"res://assets/sprites/one_up.png",
+	]:
+		_assert_sprite_contract(path, Vector2i(16, 16), true)
+	_assert_sprite_contract("res://assets/sprites/flag.png", Vector2i(16, 48), true)
+	_assert_sprite_contract("res://assets/sprites/tiles.png", Vector2i(128, 32), false)
+
+	var animation_contracts := {
+		"res://scenes/player.tscn": ["run", 4],
+		"res://scenes/goomba.tscn": ["walk", 3],
+		"res://scenes/turtle.tscn": ["walk", 3],
+		"res://scenes/swoop_bat.tscn": ["fly", 3],
+		"res://scenes/spiny.tscn": ["walk", 3],
+		"res://scenes/cannon.tscn": ["warning", 2],
+	}
+	for scene_path: String in animation_contracts:
+		var packed := load(scene_path) as PackedScene
+		var actor := packed.instantiate()
+		var sprite := actor.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		var contract: Array = animation_contracts[scene_path]
+		_assert_equal(
+			sprite.sprite_frames.get_frame_count(contract[0]),
+			contract[1],
+			"%s has authored %s frame count" % [scene_path, contract[0]]
+		)
+		actor.free()
+
+
+func _assert_sprite_contract(path: String, size: Vector2i, transparent_corner: bool) -> void:
+	var texture := load(path) as Texture2D
+	_assert_not_null(texture, "%s loads as texture" % path)
+	if texture == null:
+		return
+	var image := texture.get_image()
+	_assert_false(image.is_empty(), "%s loads as image" % path)
+	if image.is_empty():
+		return
+	_assert_equal(image.get_size(), size, "%s keeps designed dimensions" % path)
+	if transparent_corner:
+		_assert_equal(image.get_pixel(0, 0).a, 0.0, "%s has transparent silhouette padding" % path)
+
+
+func _on_test_projectile_expired(_projectile: EnemyProjectile) -> void:
+	_projectile_expired_count += 1
 
 
 func _assert_group_count_at_least(group: StringName, expected: int, label: String) -> void:

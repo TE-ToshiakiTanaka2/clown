@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/goomba.tscn" id="2_goomba"]
@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" path="res://scenes/moving_platform.tscn" id="10_moving"]
 [ext_resource type="PackedScene" path="res://scenes/falling_platform.tscn" id="11_falling"]
 [ext_resource type="PackedScene" path="res://scenes/spring.tscn" id="12_spring"]
+[ext_resource type="PackedScene" path="res://scenes/swoop_bat.tscn" id="13_bat"]
+[ext_resource type="PackedScene" path="res://scenes/spiny.tscn" id="14_spiny"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kill"]
 size = Vector2(3600, 80)
@@ -154,6 +156,21 @@ position = Vector2(2440, 273)
 
 [node name="Goomba5" parent="Enemies" instance=ExtResource("2_goomba")]
 position = Vector2(3060, 276)
+
+[node name="SwoopBat1" parent="Enemies" instance=ExtResource("13_bat")]
+position = Vector2(560, 150)
+
+[node name="SwoopBat2" parent="Enemies" instance=ExtResource("13_bat")]
+position = Vector2(1360, 100)
+
+[node name="SwoopBat3" parent="Enemies" instance=ExtResource("13_bat")]
+position = Vector2(2660, 120)
+
+[node name="Spiny1" parent="Enemies" instance=ExtResource("14_spiny")]
+position = Vector2(1700, 273)
+
+[node name="Spiny2" parent="Enemies" instance=ExtResource("14_spiny")]
+position = Vector2(3220, 276)
 
 [node name="Coins" type="Node2D" parent="."]
 

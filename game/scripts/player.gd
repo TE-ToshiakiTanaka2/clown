@@ -42,6 +42,7 @@ var _last_descending_physics_frame: int = -1000
 
 
 func _ready() -> void:
+	add_to_group("player")
 	Game.level_cleared.connect(_on_level_cleared)
 	invincibility_timer.wait_time = INVINCIBILITY_SEC
 	invincibility_timer.timeout.connect(_on_invincibility_timeout)

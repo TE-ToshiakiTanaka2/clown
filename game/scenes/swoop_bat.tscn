@@ -1,0 +1,67 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/swoop_bat.gd" id="1_bat"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bat_fly_0.png" id="2_fly0"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bat_fly_1.png" id="3_fly1"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bat_fly_2.png" id="4_fly2"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bat_dive.png" id="5_dive"]
+[ext_resource type="Texture2D" path="res://assets/sprites/bat_defeated.png" id="6_defeated"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(20, 14)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_contact"]
+size = Vector2(24, 20)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bat"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_fly0")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_fly1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_fly2")
+}],
+"loop": true,
+"name": &"fly",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_dive")
+}],
+"loop": true,
+"name": &"dive",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_defeated")
+}],
+"loop": false,
+"name": &"defeated",
+"speed": 5.0
+}]
+
+[node name="SwoopBat" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_bat")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_bat")
+animation = &"fly"
+autoplay = "fly"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="ContactArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactArea"]
+shape = SubResource("RectangleShape2D_contact")

@@ -9,6 +9,8 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/tiles.png" id="11_tiles"]
 [ext_resource type="PackedScene" path="res://scenes/turtle.tscn" id="12_turtle"]
 [ext_resource type="PackedScene" path="res://scenes/question_block.tscn" id="13_qblock"]
+[ext_resource type="PackedScene" path="res://scenes/swoop_bat.tscn" id="14_bat"]
+[ext_resource type="PackedScene" path="res://scenes/spiny.tscn" id="15_spiny"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d5akn"]
 texture = ExtResource("11_tiles")
@@ -107,6 +109,15 @@ position = Vector2(648, 149)
 
 [node name="Turtle2" parent="Enemies" instance=ExtResource("12_turtle")]
 position = Vector2(1944, 149)
+
+[node name="SwoopBat1" parent="Enemies" instance=ExtResource("14_bat")]
+position = Vector2(1080, 72)
+
+[node name="SwoopBat2" parent="Enemies" instance=ExtResource("14_bat")]
+position = Vector2(2200, 56)
+
+[node name="Spiny1" parent="Enemies" instance=ExtResource("15_spiny")]
+position = Vector2(1380, 149)
 
 [node name="Coins" type="Node2D" parent="."]
 
@@ -214,4 +225,3 @@ script = ExtResource("9_2cbcq")
 shape = SubResource("WorldBoundaryShape2D_x2fux")
 
 [node name="HUD" parent="." instance=ExtResource("10_isj1j")]
-
