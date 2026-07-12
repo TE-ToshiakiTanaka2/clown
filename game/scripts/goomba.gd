@@ -7,6 +7,8 @@ extends CharacterBody2D
 @onready var floor_ray: RayCast2D = $FloorRay
 @onready var stomp_area: Area2D = $StompArea
 @onready var hit_area: Area2D = $HitArea
+@onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var squash_timer: Timer = $SquashTimer
 
 var direction: int = -1
 var _squashed: bool = false
@@ -16,7 +18,9 @@ var _gravity: float = ProjectSettings.get_setting("physics/2d/default_gravity")
 func _ready() -> void:
 	stomp_area.body_entered.connect(_on_stomp_area_body_entered)
 	hit_area.body_entered.connect(_on_hit_area_body_entered)
+	squash_timer.timeout.connect(_on_squash_timer_timeout)
 	floor_ray.position.x = abs(floor_ray.position.x) * direction
+	sprite.flip_h = direction > 0
 
 
 func _physics_process(delta: float) -> void:
@@ -37,6 +41,7 @@ func _physics_process(delta: float) -> void:
 func _reverse_direction() -> void:
 	direction *= -1
 	floor_ray.position.x = abs(floor_ray.position.x) * direction
+	sprite.flip_h = direction > 0
 
 
 func _is_stomp(body: Node) -> bool:
@@ -69,4 +74,9 @@ func squash(player: Player) -> void:
 	set_collision_mask_value(1, false)
 	set_collision_mask_value(2, false)
 	set_physics_process(false)
+	sprite.play("squashed")
+	squash_timer.start()
+
+
+func _on_squash_timer_timeout() -> void:
 	queue_free()
